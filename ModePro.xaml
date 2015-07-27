@@ -1,0 +1,393 @@
+﻿<Controls:MetroWindow  x:Class="AutoDice.ModePro"
+                       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                       xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                       xmlns:sparrowToolkit="http://sparrowtoolkit.codeplex.com/wpf"
+                       BorderBrush="{DynamicResource AccentColorBrush}" BorderThickness="1"
+                       Title="AutoDice: [Username] [Advanced Mode]" TitleCaps="False"
+                       Width="1200" MinWidth="960" Height="675" MinHeight="322"
+                       ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen"
+                       Loaded="MetroWindow_Loaded">
+    <Controls:MetroWindow.TaskbarItemInfo>
+        <TaskbarItemInfo/>
+    </Controls:MetroWindow.TaskbarItemInfo>
+    <Controls:MetroWindow.RightWindowCommands>
+        <Controls:WindowCommands>
+            <Button x:Name="btnLoadSave" ToolTip="Load / Save" Click="btnLoadSave_Click">
+                <Rectangle Width="18" Height="18"
+                           Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Stretch="Fill"
+                                     Visual="{DynamicResource appbar_disk}" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+            <Button x:Name="btnTip" ToolTip="Send Tip" Click="btnTip_Click">
+                <Rectangle Width="16.3" Height="18"
+                           Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Stretch="Fill"
+                                     Visual="{DynamicResource appbar_money}" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+            <Button x:Name="btnNormalMode" ToolTip="Back to Normal Mode" Click="btnNormalMode_Click">
+                <Rectangle Width="17" Height="18"
+                           Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Stretch="Fill"
+                                     Visual="{DynamicResource appbar_camera_flash_off}" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+            <Button x:Name="btnSettings" ToolTip="Settings" Click="btnSettings_Click">
+                <Rectangle Width="18" Height="18"
+                           Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Stretch="Fill"
+                                     Visual="{DynamicResource appbar_settings}" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+            <Button x:Name="btnAbout" ToolTip="About..." Click="btnAbout_Click">
+                <Rectangle Width="11.5" Height="18"
+                           Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Stretch="Fill"
+                                     Visual="{DynamicResource appbar_question}" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+        </Controls:WindowCommands>
+    </Controls:MetroWindow.RightWindowCommands>
+    <Controls:MetroWindow.Flyouts>
+        <Controls:FlyoutsControl>
+            <Controls:Flyout x:Name="FlyoutLoadSave" Position="Top" Height="70" Width="210" Theme="Inverse">
+                <Grid>
+                    <Button ToolTip="Load Strategie" Style="{DynamicResource MetroCircleButtonStyle}" Width="50" Height="50" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top" Click="BtnLoadStrategie_Click">
+                        <Rectangle Width="20" Margin="3,2,0,0"
+                               Height="20"
+                               Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <Rectangle.OpacityMask>
+                                <VisualBrush Stretch="Fill"
+                                         Visual="{DynamicResource appbar_disk_load}" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+                    </Button>
+                    <Button ToolTip="Save Strategie" Style="{DynamicResource MetroCircleButtonStyle}" Width="50" Height="50" HorizontalAlignment="Left" Margin="70,10,0,0" VerticalAlignment="Top" Click="BtnSaveStrategie_Click">
+                        <Rectangle Width="20"
+                               Height="20" Margin="3,2,0,0"
+                               Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <Rectangle.OpacityMask>
+                                <VisualBrush Stretch="Fill"
+                                         Visual="{DynamicResource appbar_disk_save}" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+                    </Button>
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="FlyoutProcessExecution" IsPinned="True" Position="Bottom" Height="70" Width="400" Theme="Inverse">
+                <Grid>
+                    <Controls:TransitioningContentControl x:Name="lblStatusTip" Margin="0,10,0,0"
+                                                  Transition="Right" HorizontalContentAlignment="Left" VerticalAlignment="Top" FontSize="20" />
+                    <Controls:MetroProgressBar Foreground="{DynamicResource AccentColorBrush}" x:Name="ProgressTip" Margin="0,0,0,10" VerticalAlignment="Bottom" Height="13" />
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="FlyoutTip" Header="Tip" IsPinned="False" Position="Right" Height="280" Width="310" Theme="Inverse">
+                <Grid>
+                    <Label x:Name="lblTipMessage" Content="You don't have enough balance!" Visibility="Hidden"
+                           HorizontalAlignment="Left" Margin="0,56,0,0" VerticalAlignment="Top" FontSize="16"
+                           FontFamily="Segoe UI Semibold" Width="299" HorizontalContentAlignment="Center" />
+                    <Label x:Name="lblTipAmount" Content="Amount:" HorizontalAlignment="Left" Margin="15,13,0,0"
+                           VerticalAlignment="Top" />
+                    <Controls:NumericUpDown x:Name="numAmountTip" Minimum="0.00000001" Maximum="0.1"
+                                            Interval="0.00000001" StringFormat="0.00000000" Value="0.00000001"
+                                            Margin="75,13,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="172" />
+                    <Label x:Name="lblTipPayee" Content="Payee:" HorizontalAlignment="Left" Margin="26,57,0,0"
+                           VerticalAlignment="Top" />
+                    <TextBox x:Name="txtPayee" HorizontalAlignment="Left" Height="23" Margin="75,57,0,0"
+                             TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="100" TextChanged="txtPayee_TextChanged" />
+                    <Button x:Name="btnDonateMe" Content="Donate me" Margin="203,58,0,0" VerticalAlignment="Top"
+                            HorizontalAlignment="Left" Width="75" Click="btnDonateMe_Click" />
+                    <Label x:Name="lblOrDonateMe" Content="or" Margin="0,56,111,0" VerticalAlignment="Top"
+                           HorizontalAlignment="Right" Width="21" />
+                    <Button x:Name="btnSendTip" Content="Send tip!" IsEnabled="False" Margin="75,116,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="181" Click="btnSendTip_Click"/>
+                    <Label x:Name="lblBtc" Content="BTC" HorizontalAlignment="Left" Margin="252,13,0,0"
+                           VerticalAlignment="Top" />
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="flyoutAbout" IsPinned="False" Header="About" Position="Right" Width="250" Height="280"
+                             Theme="Inverse">
+                <Grid>
+                    <Label x:Name="lblVersion" Margin="10,150,10,0" FontSize="14"
+                           VerticalAlignment="Top" HorizontalContentAlignment="Center" />
+                    <Image x:Name="logoBlack" Margin="26,0,27,0" Source="logo.png" Stretch="Fill" Height="140"
+                           VerticalAlignment="Top"/>
+                    <Image x:Name="logoWhite" Margin="26,0,27,0" Source="logo_white.png" Stretch="Fill" Height="140"
+                           VerticalAlignment="Top"/>
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="flyoutSettings" Header="Settings" Position="Right" Width="384" Height="280" Theme="Inverse">
+                <Grid>
+                    <Label Content="Theme: " Margin="73,20,238,0" FontSize="14.667" VerticalAlignment="Top"
+                           FontFamily="Segoe UI Semibold" />
+                    <Label Content="Accent: " Margin="73,67,238,0" FontSize="14.667" VerticalAlignment="Top"
+                           FontFamily="Segoe UI Semibold" />
+                    <Label Content="Max Bet/s: " Margin="73,114,200,0" FontSize="14.667" VerticalAlignment="Top"
+                           FontFamily="Segoe UI Semibold" />
+                    <ComboBox x:Name="cmbTheme" Margin="137,24,72,0" SelectionChanged="cmbTheme_SelectionChanged"
+                              VerticalAlignment="Top" />
+                    <ComboBox x:Name="cmbAccent" Margin="137,71,72,0" SelectionChanged="cmbAccent_SelectionChanged"
+                              VerticalAlignment="Top" />
+                    <Controls:NumericUpDown x:Name="NumDelay" Minimum="1" Maximum="5" Interval="0.01" Value="3"
+                                            Margin="180,118,72,0" VerticalAlignment="Top" ValueChanged="NumStartingChance_ValueChanged"/>
+                </Grid>
+            </Controls:Flyout>
+        </Controls:FlyoutsControl>
+    </Controls:MetroWindow.Flyouts>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="200*" MinHeight="234" MaxHeight="234"/>
+            <RowDefinition Height="300*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="450" MaxWidth="450"/>
+            <ColumnDefinition Width="37*"/>
+            <ColumnDefinition Width="27*" MaxWidth="250"/>
+        </Grid.ColumnDefinitions>
+        <ScrollViewer HorizontalScrollBarVisibility="Visible" Margin="0,0,0,0" Grid.RowSpan="2">
+            <Grid Margin="0">
+                <TabControl Margin="0">
+                    <TabItem Header="Strategies">
+                        <Grid Width="428">
+                            <TabControl Margin="0" SelectionChanged="TabStrategies_SelectionChanged">
+                                <TabItem x:Name="TabMartingale" Header="Martingale">
+                                    <Grid>
+                                        <GroupBox Header="Multiply on loss"  HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="250" Width="408" RenderTransformOrigin="0.5,0.5">
+                                            <Grid Margin="0,12,0,0">
+                                                <Label Content="Multiplier: " ToolTip="Upon a loss, the next bet will be multiplied by X" HorizontalAlignment="Left" VerticalAlignment="Top" Width="82" HorizontalContentAlignment="Right" Margin="0,-15,0,0"/>
+                                                <Controls:NumericUpDown x:Name="NumMultiplierLoss" Value="2" Minimum="0.1" Maximum="1000000" Interval="0.01" Margin="82,-15,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" ValueChanged="NumMultiplierLoss_ValueChanged"/>
+                                                <RadioButton x:Name="RadMaxLoss" Content="Max" ToolTip="This will limit the maximum amount of loss in a row to multiply" HorizontalAlignment="Left" Margin="210,-11,0,0" VerticalAlignment="Top" GroupName="GroupModeLoss" Checked="AllLossRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadVariableLoss" Content="Variable" ToolTip="This will multiply the multiplier given the next settings" HorizontalAlignment="Left" Margin="291,-11,0,0" VerticalAlignment="Top" GroupName="GroupModeLoss" Checked="AllLossRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadConstrantLoss" Content="Constant" ToolTip="This will multiply forever" HorizontalAlignment="Left" Margin="210,20,0,0" VerticalAlignment="Top" GroupName="GroupModeLoss" IsChecked="True" Checked="AllLossRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadChangeOnceLoss" Content="Change Once" ToolTip="This will multiply the multiplier ONLY ONCE given the next settings" HorizontalAlignment="Left" Margin="291,20,0,0" VerticalAlignment="Top" GroupName="GroupModeLoss" Checked="AllLossRadioButtons_CheckedChanged"/>
+                                                <Label Content="Max Multiplies: " ToolTip="In a losing streak, the bet will be multiplied until the streak reaches X. The next bets will be with the same amount" HorizontalAlignment="Left" Margin="-9,16,0,0" VerticalAlignment="Top" Width="91" HorizontalContentAlignment="Right"/>
+                                                <Controls:NumericUpDown x:Name="NumMaxMultipliesLoss" Value="15" Minimum="1" Maximum="999999" Interval="1" Margin="82,16,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" IsEnabled="False" ValueChanged="NumMaxMultipliesLoss_ValueChanged"/>
+                                                <Label Content="After: " ToolTip="With every X loses in a row, the Multiplier will be multipied by Y" HorizontalAlignment="Left" Margin="0,47,0,0" VerticalAlignment="Top" Width="82" HorizontalContentAlignment="Right"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterLoss" Value="1" Minimum="1" Maximum="999999" Interval="1" Margin="82,47,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" IsEnabled="False" ValueChanged="NumAfterLoss_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumMultiplierAfterLoss" Value="1.0" Minimum="0.1" Maximum="1000000" Interval="0.01" Margin="296,47,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="100" IsEnabled="False" ValueChanged="NumMultiplierAfterLoss_ValueChanged"/>
+                                                <Label Content="Losses, multiply by:" ToolTip="This is Y :P" HorizontalAlignment="Left" Margin="186,47,0,0" VerticalAlignment="Top" Width="110"/>
+                                                <CheckBox x:Name="ChkAfterLossesInRowChangeBet" Content="After" HorizontalAlignment="Left" Margin="0,108,0,0" VerticalAlignment="Top" Checked="AllLossCheckBox_CheckedChanged" Unchecked="AllLossCheckBox_CheckedChanged"/>
+                                                <CheckBox x:Name="ChkAfterLossesInRowChangeChance" Content="After" HorizontalAlignment="Left" Margin="0,139,0,0" VerticalAlignment="Top" Checked="AllLossCheckBox_CheckedChanged" Unchecked="AllLossCheckBox_CheckedChanged"/>
+                                                <CheckBox x:Name="ChkReturnBaseBetAfterFirstLoss" Content="Return to Base bet after first loss" HorizontalAlignment="Left" Margin="0,166,0,0" VerticalAlignment="Top" Checked="AllLossCheckBox_CheckedChanged" Unchecked="AllLossCheckBox_CheckedChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXLossesInRowChangeBet" Value="2" Minimum="2" Maximum="99" Interval="1" Margin="55,104,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" IsEnabled="False" ValueChanged="NumAfterXLossesInRowChangeBet_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXLossesInRowChangeChance" Value="2" Minimum="2" Maximum="99" Interval="1" Margin="55,135,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" IsEnabled="False" ValueChanged="NumAfterXLossesInRowChangeChance_ValueChanged"/>
+                                                <Label Content="Losses in row change bet to:" HorizontalAlignment="Left" Margin="125,104,0,0" VerticalAlignment="Top" Width="157"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXLossesInRowChangeBetNumber" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="282,104,0,0" VerticalAlignment="Top" IsEnabled="False" ValueChanged="NumAfterXLossesInRowChangeBetNumber_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXLossesInRowChangeChanceNumber" Value="49.50" Minimum="0.01" Maximum="98" Interval="0.01" Margin="306,135,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="90" IsEnabled="False" ValueChanged="NumAfterXLossesInRowChangeChanceNumber_ValueChanged"/>
+                                                <Label Content="Losses in row change chance to:" HorizontalAlignment="Left" Margin="125,135,0,0" VerticalAlignment="Top" Width="191"/>
+                                                <Button x:Name="BtnCheckMartingale" Content="Check Strat" ToolTip="This will simulate losses in a row and calculate how much you can hold on" HorizontalAlignment="Right" Width="75" Height="25" VerticalAlignment="Bottom" Click="BtnCheckMartingale_Click"/>
+                                                <CheckBox x:Name="ChkMultiplyOnlyOneTimeLoss" Content="Multiply only one time and return to base multiplier (Variable Only)" HorizontalAlignment="Left" Margin="0,81,0,0" VerticalAlignment="Top" Checked="ChkMultiplyOnlyOneTimeLoss_CheckedChanged" Unchecked="ChkMultiplyOnlyOneTimeLoss_CheckedChanged" IsEnabled="False"/>
+
+                                            </Grid>
+
+                                        </GroupBox>
+                                        <GroupBox Header="Multiply on win"  HorizontalAlignment="Left" Margin="10,265,0,0" VerticalAlignment="Top" Height="250" Width="408" RenderTransformOrigin="0.5,0.5">
+                                            <Grid Margin="0,12,0,0">
+                                                <Label Content="Multiplier: " ToolTip="Upon a won, the next bet will be multiplied by X" HorizontalAlignment="Left" VerticalAlignment="Top" Width="82" HorizontalContentAlignment="Right"/>
+                                                <Controls:NumericUpDown x:Name="NumMultiplierWon" Value="1.0" Minimum="0.1" Maximum="1000000" Interval="0.01" Margin="82,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" ValueChanged="NumMultiplierWon_ValueChanged"/>
+                                                <RadioButton x:Name="RadMaxWon" Content="Max" ToolTip="This will limit the maximum amount of wons in a row to multiply" HorizontalAlignment="Left" Margin="210,4,0,0" VerticalAlignment="Top" GroupName="GroupModeWon" Checked="AllWonRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadVariableWon" Content="Variable" ToolTip="This will multiply the multiplier given the next settings" HorizontalAlignment="Left" Margin="291,4,0,0" VerticalAlignment="Top" GroupName="GroupModeWon" Checked="AllWonRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadConstrantWon" Content="Constant" ToolTip="This will multiply forever" HorizontalAlignment="Left" Margin="210,35,0,0" VerticalAlignment="Top" GroupName="GroupModeWon" IsChecked="True" Checked="AllWonRadioButtons_CheckedChanged"/>
+                                                <RadioButton x:Name="RadChangeOnceWon" Content="Change Once" ToolTip="This will multiply the multiplier ONLY ONCE given the next settings" HorizontalAlignment="Left" Margin="291,35,0,0" VerticalAlignment="Top" GroupName="GroupModeWon" Checked="AllWonRadioButtons_CheckedChanged"/>
+                                                <Label Content="Max Multiplies: " ToolTip="In a winning streak, the bet will be multiplied until the streak reaches X. The next bets will be with the same amount" HorizontalAlignment="Left" Margin="0,31,0,0" VerticalAlignment="Top" Width="82" HorizontalContentAlignment="Right"/>
+                                                <Controls:NumericUpDown x:Name="NumMaxMultipliesWon" Value="15" Minimum="1" Maximum="999999" Interval="1" Margin="82,31,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" IsEnabled="False" ValueChanged="NumMaxMultipliesWon_ValueChanged"/>
+                                                <Label Content="After: " ToolTip="With every X wons in a row, the Multiplier will be multipied by Y" HorizontalAlignment="Left" Margin="0,62,0,0" VerticalAlignment="Top" Width="82" HorizontalContentAlignment="Right"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterWon" Value="1" Minimum="1" Maximum="999999" Interval="1" Margin="82,62,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="104" IsEnabled="False" ValueChanged="NumAfterWon_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumMultiplierAfterWon" Value="1.0" Minimum="0.1" Maximum="1000000" Interval="0.01" Margin="296,62,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="100" IsEnabled="False" ValueChanged="NumMultiplierAfterWon_ValueChanged"/>
+                                                <Label Content="Wins, multiply by:" ToolTip="This is Y :P" HorizontalAlignment="Left" Margin="186,62,0,0" VerticalAlignment="Top" Width="110"/>
+                                                <CheckBox x:Name="ChkAfterWonsInRowChangeBet" Content="After" HorizontalAlignment="Left" Margin="0,108,0,0" VerticalAlignment="Top" Checked="AllWonCheckBox_CheckedChanged" Unchecked="AllWonCheckBox_CheckedChanged"/>
+                                                <CheckBox x:Name="ChkAfterWonsInRowChangeChance" Content="After" HorizontalAlignment="Left" Margin="0,139,0,0" VerticalAlignment="Top" Checked="AllWonCheckBox_CheckedChanged" Unchecked="AllWonCheckBox_CheckedChanged"/>
+                                                <CheckBox x:Name="ChkReturnBaseBetAfterFirstWon" Content="Return to Base bet after first win" HorizontalAlignment="Left" Margin="0,166,0,0" VerticalAlignment="Top" Checked="AllWonCheckBox_CheckedChanged" Unchecked="AllWonCheckBox_CheckedChanged" IsChecked="True"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXWonsInRowChangeBet" Value="2" Minimum="2" Maximum="99" Interval="1" Margin="55,104,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" IsEnabled="False" ValueChanged="NumAfterXWonsInRowChangeBet_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXWonsInRowChangeChance" Value="2" Minimum="2" Maximum="99" Interval="1" Margin="55,135,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" IsEnabled="False" ValueChanged="NumAfterXWonsInRowChangeChance_ValueChanged"/>
+                                                <Label Content="Wins in row change bet to:" HorizontalAlignment="Left" Margin="125,104,0,0" VerticalAlignment="Top" Width="157"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXWonsInRowChangeBetNumber" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="282,104,0,0" VerticalAlignment="Top" IsEnabled="False" ValueChanged="NumAfterXWonsInRowChangeBetNumber_ValueChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumAfterXWonsInRowChangeChanceNumber" Value="49.50" Minimum="0.01" Maximum="98" Interval="0.01" Margin="306,135,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="90" IsEnabled="False" ValueChanged="NumAfterXWonsInRowChangeChanceNumber_ValueChanged"/>
+                                                <Label Content="Wins in row change chance to:" HorizontalAlignment="Left" Margin="125,135,0,0" VerticalAlignment="Top" Width="191"/>
+
+                                            </Grid>
+
+                                        </GroupBox>
+                                    </Grid>
+                                </TabItem>
+                                <TabItem x:Name="TabFibonacci" Header="Fibonacci">
+                                    <Grid>
+                                        <ListBox x:Name="lstFibonacci" HorizontalAlignment="Left" Height="327" Margin="10,36,0,0" VerticalAlignment="Top" Width="400" BorderThickness="1" BorderBrush="{DynamicResource AccentColorBrush}"/>
+                                        <Label Content="This list is based on your Starting Bet:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="400"/>
+                                        <GroupBox Header="On Loss" HorizontalAlignment="Left" Margin="10,368,0,0" VerticalAlignment="Top" Height="118" Width="197">
+                                            <Grid>
+                                                <RadioButton x:Name="ChkFibonacciLossIncrease" Content="Increase" HorizontalAlignment="Left" Margin="0,6,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciLoss" IsChecked="True" Checked="ChkFibonacciLoss_CheckedChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumFibonacciIncrementLoss" Value="1" Minimum="-50" Maximum="50" Interval="1" Margin="72,2,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" ValueChanged="NumFibonacciIncrementLoss_ValueChanged" />
+
+                                                <RadioButton x:Name="ChkFibonacciLossRestart" Content="Restart" HorizontalAlignment="Left" Margin="0,29,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciLoss" Checked="ChkFibonacciLoss_CheckedChanged"/>
+                                                <RadioButton x:Name="ChkFibonacciLossStop" Content="Stop" HorizontalAlignment="Left" Margin="0,51,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciLoss" Checked="ChkFibonacciLoss_CheckedChanged"/>
+                                                <Label Content="Steps" HorizontalAlignment="Left" Margin="142,2,0,0" VerticalAlignment="Top"/>
+
+                                            </Grid>
+                                        </GroupBox>
+                                        <GroupBox Header="On Won" HorizontalAlignment="Left" Margin="212,368,0,0" VerticalAlignment="Top" Height="118" Width="198">
+                                            <Grid>
+                                                <RadioButton x:Name="ChkFibonacciWonIncrease" Content="Increase" HorizontalAlignment="Left" Margin="0,6,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciWon" Checked="ChkFibonacciWon_CheckedChanged"/>
+                                                <Controls:NumericUpDown x:Name="NumFibonacciIncrementWon" Value="-1" Minimum="-50" Maximum="50" Interval="1" Margin="72,2,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" ValueChanged="NumFibonacciIncrementWon_ValueChanged" />
+
+                                                <RadioButton x:Name="ChkFibonacciWonRestart" Content="Restart" HorizontalAlignment="Left" Margin="0,29,0,0" VerticalAlignment="Top" IsChecked="True" GroupName="GroupFibonacciWon" Checked="ChkFibonacciWon_CheckedChanged"/>
+                                                <RadioButton x:Name="ChkFibonacciWonStop" Content="Stop" HorizontalAlignment="Left" Margin="0,51,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciWon" Checked="ChkFibonacciWon_CheckedChanged"/>
+                                                <Label Content="Steps" HorizontalAlignment="Left" Margin="142,2,0,0" VerticalAlignment="Top"/>
+
+                                            </Grid>
+                                        </GroupBox>
+                                        <CheckBox x:Name="ChkFibonacciWhenLevel" Content="When level" HorizontalAlignment="Left" Margin="10,495,0,0" VerticalAlignment="Top" Checked="ChkFibonacciWhenLevel_CheckedChanged" Unchecked="ChkFibonacciWhenLevel_CheckedChanged"/>
+                                        <Controls:NumericUpDown x:Name="NumFibonacciWhenLevel" Value="10" Minimum="1" Maximum="50" Interval="1" Margin="97,491,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" ValueChanged="NumFibonacciWhenLevel_ValueChanged" />
+                                        <RadioButton x:Name="ChkFibonacciWhenLevelReset" Content="Reset" HorizontalAlignment="Left" Margin="246,495,0,0" VerticalAlignment="Top" IsChecked="True" GroupName="GroupFibonacciAux" Checked="ChkFibonacciWhenLevelOption_CheckedChanged"/>
+                                        <RadioButton x:Name="ChkFibonacciWhenLevelStop" Content="Stop" HorizontalAlignment="Left" Margin="313,495,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciAux" Checked="ChkFibonacciWhenLevelOption_CheckedChanged"/>
+                                        <Label Content="is reached: " HorizontalAlignment="Left" Margin="172,491,0,0" VerticalAlignment="Top"/>
+
+                                    </Grid>
+                                </TabItem>
+                                <TabItem Header="More coming" IsEnabled="False"/>
+                                <Grid/>
+                            </TabControl>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Stop Conditions">
+                        <Grid Width="428" Margin="0,3,0,-3">
+                            <CheckBox x:Name="ChkBalanceLimit" Content="Balance Limit:" ToolTip="When your balance reaches this value, the bot will stop playing" HorizontalAlignment="Left" Margin="67,23,0,0" VerticalAlignment="Top" Checked="ChkStopConditions_CheckedChanged" Unchecked="ChkStopConditions_CheckedChanged"/>
+                            <Controls:NumericUpDown x:Name="NumBalanceLimit" Value="0.00000001" Minimum="0.00000001" Maximum="100" Interval="0.00000001" StringFormat="0.00000000" Margin="203,19,90,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                            <CheckBox x:Name="ChkBalanceLowerLimit" Content="Balance Lower Limit:" ToolTip="When your balance goes below this value, the bot will stop playing" HorizontalAlignment="Left" Margin="67,54,0,0" VerticalAlignment="Top" Unchecked="ChkStopConditions_CheckedChanged" Checked="ChkStopConditions_CheckedChanged"/>
+                            <Controls:NumericUpDown x:Name="NumBalanceLowerLimit" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="203,50,90,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                            <GroupBox Header="Stop/reset conditions on losses" Margin="45,100,0,0" VerticalAlignment="Top" Height="220" HorizontalAlignment="Left" Width="350">
+                                <Grid Margin="0">
+                                    <CheckBox x:Name="ChkStopAfterBTCLoss" Content="Stop after" ToolTip="If your balance dropped X BTC, the bot will stop betting" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,32,0,0" Width="81" Checked="ChkStopConditions_CheckedChanged" Unchecked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkStopAfterLossesInRow" Content="Stop after" ToolTip="If you have X losses in a row, the bot will stop betting" HorizontalAlignment="Left" Margin="10,63,0,0" VerticalAlignment="Top" Width="81" Unchecked="ChkStopConditions_CheckedChanged" Checked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkResetAfterBTCLoss" ToolTip="If your balance dropped X BTC, the strat will be reseted" Content="Reset after" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top" Checked="ChkStopConditions_CheckedChanged" Unchecked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkResetAfterLossesInRow" Content="Reset after" ToolTip="If you have X losses in a row, the strat will be reseted" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Unchecked="ChkStopConditions_CheckedChanged" Checked="ChkStopConditions_CheckedChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumStopBTCLoss" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="96,28,107,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumStopLosesInRow" Value="1" Minimum="1" Maximum="1000000" Interval="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged" Margin="96,59,0,0"/>
+                                    <Controls:NumericUpDown x:Name="NumResetBTCLoss" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="96,90,107,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumResetLosesInRow" Value="1" Minimum="1" Maximum="1000000" Interval="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged" Margin="96,121,0,0"/>
+                                    <Label Content="Losses in a row" HorizontalAlignment="Left" Margin="236,59,0,0" VerticalAlignment="Top"/>
+                                    <Label Content="BTC Loss" HorizontalAlignment="Left" Margin="236,28,0,0" VerticalAlignment="Top" Width="90"/>
+                                    <Label Content="Losses in a row" HorizontalAlignment="Left" Margin="238,121,0,0" VerticalAlignment="Top"/>
+                                    <Label Content="BTC Loss" HorizontalAlignment="Left" Margin="236,90,0,0" VerticalAlignment="Top" Width="90"/>
+                                </Grid>
+                            </GroupBox>
+                            <GroupBox Header="Stop/reset conditions on wins" Margin="45,348,0,0" VerticalAlignment="Top" Height="220" HorizontalAlignment="Left" Width="350">
+                                <Grid Margin="0">
+                                    <CheckBox x:Name="ChkStopAfterBTCProfit" Content="Stop after" ToolTip="If your balance has increased in X BTC, the bot will stop betting" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,32,0,0" Width="81" Checked="ChkStopConditions_CheckedChanged" Unchecked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkStopAfterWonsInRow" Content="Stop after" ToolTip="If you have X wons in a row, the bot will stop betting" HorizontalAlignment="Left" Margin="10,63,0,0" VerticalAlignment="Top" Width="81" Unchecked="ChkStopConditions_CheckedChanged" Checked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkResetAfterBTCProfit" Content="Reset after" ToolTip="If your balance has increased in X BTC, the strat will be reseted" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top" Checked="ChkStopConditions_CheckedChanged" Unchecked="ChkStopConditions_CheckedChanged"/>
+                                    <CheckBox x:Name="ChkResetAfterWonsInRow" Content="Reset after" ToolTip="If you have X wons in a row, the strat will be reseted" HorizontalAlignment="Left" Margin="10,125,0,0" VerticalAlignment="Top" Unchecked="ChkStopConditions_CheckedChanged" Checked="ChkStopConditions_CheckedChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumStopBTCProfit" Value="0.00000001" Minimum="0.00000001" Maximum="100" Interval="0.00000001" StringFormat="0.00000000" Margin="96,28,107,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumStopWonsInRow" Value="1" Minimum="1" Maximum="1000000" Interval="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged" Margin="96,59,0,0"/>
+                                    <Controls:NumericUpDown x:Name="NumResetBTCProfit" Value="0.00000001" Minimum="0.00000001" Maximum="100" Interval="0.00000001" StringFormat="0.00000000" Margin="96,90,107,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged"/>
+                                    <Controls:NumericUpDown x:Name="NumResetWonsInRow" Value="1" Minimum="1" Maximum="1000000" Interval="1" VerticalAlignment="Top" HorizontalAlignment="Left" Width="135" IsEnabled="False" ValueChanged="NumStopConditions_ValueChanged" Margin="96,121,0,0"/>
+                                    <Label Content="Wins in a row" HorizontalAlignment="Left" Margin="236,59,0,0" VerticalAlignment="Top"/>
+                                    <Label Content="BTC Profit" HorizontalAlignment="Left" Margin="236,28,0,0" VerticalAlignment="Top" Width="90"/>
+                                    <Label Content="Wins in a row" HorizontalAlignment="Left" Margin="238,121,0,0" VerticalAlignment="Top"/>
+                                    <Label Content="BTC Profit" HorizontalAlignment="Left" Margin="236,90,0,0" VerticalAlignment="Top" Width="90"/>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </ScrollViewer>
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="10" Grid.Row="0" Grid.RowSpan="2"/>
+        <GridSplitter ResizeDirection="Rows" Grid.Column="1" HorizontalAlignment="Stretch" Height="10" Margin="10,0,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.ColumnSpan="2"/>
+        <Grid Grid.Column="1" Margin="20,20,10,10" Grid.Row="1" Grid.ColumnSpan="2" >
+            <TabControl Margin="-10,-10,-10,-10">
+                <TabItem Header="DataGrid">
+                    <Grid>
+                        <DataGrid x:Name="GridBets" Margin="0,25,0,0" VerticalAlignment="Top" IsReadOnly="True"/>
+                        <CheckBox x:Name="ChkAutoScroll" Content="AutoScroll" HorizontalAlignment="Right" Margin="0,0,35,0" VerticalAlignment="Top" IsChecked="True" Checked="ChkAutoScroll_CheckedChanged" Unchecked="ChkAutoScroll_CheckedChanged"/>
+                        <CheckBox x:Name="ChkShowWons" Content="Show Wons" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Unchecked="ChkShowWonsLosses_CheckedChanged" Checked="ChkShowWonsLosses_CheckedChanged"/>
+                        <CheckBox x:Name="ChkShowLosses" Content="Show Losses" HorizontalAlignment="Left" Margin="105,0,0,0" VerticalAlignment="Top" Checked="ChkShowWonsLosses_CheckedChanged" Unchecked="ChkShowWonsLosses_CheckedChanged"/>
+                        <Button x:Name="BtnClearGrid" ToolTip="Clear Grid" Style="{DynamicResource MetroCircleButtonStyle}" Margin="0,-9,0,0" VerticalAlignment="Top" Height="30" HorizontalAlignment="Right" Width="30" Click="BtnClearGrid_Click">
+                            <Rectangle HorizontalAlignment="Left" Width="10" Height="10" VerticalAlignment="Bottom" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                <Rectangle.OpacityMask>
+                                    <VisualBrush Visual="{StaticResource appbar_close}" Stretch="Fill" />
+                                </Rectangle.OpacityMask>
+                            </Rectangle>
+                        </Button>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Graph" x:Name="TabGraph">
+                    <Grid>
+                        <sparrowToolkit:SparrowChart Margin="0,50,10,0" CompositingQuality="HighSpeed" SmoothingMode="HighSpeed" AxisHeight="500">
+                            <sparrowToolkit:SparrowChart.XAxis>
+                                <sparrowToolkit:LinearXAxis StringFormat="0"/>
+                            </sparrowToolkit:SparrowChart.XAxis>
+                            <sparrowToolkit:SparrowChart.YAxis >
+                                <sparrowToolkit:LinearYAxis StringFormat="0.00000000"/>
+                            </sparrowToolkit:SparrowChart.YAxis>
+                            <sparrowToolkit:SplineSeries x:Name="Profit" Stroke="{DynamicResource AccentColorBrush}" StrokeThickness="3" />
+                        </sparrowToolkit:SparrowChart>
+                        <Label Content="To avoid memory issues, this graph will show 100 bets only." Margin="10,10,387,0" VerticalAlignment="Top"/>
+                        <Label x:Name="lblAverageProfit" Content="" Margin="345,10,5,0" VerticalAlignment="Top" HorizontalContentAlignment="Right"/>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <Label x:Name="LblStatus" Margin="240,0,111,0" Height="25" VerticalAlignment="Top" HorizontalContentAlignment="Center"/>
+            <Label x:Name="lblSpeed" Margin="599,0,0,0" Height="25" VerticalAlignment="Top" HorizontalContentAlignment="Right"/>
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="1" Margin="20,0,10,10">
+            <Label Content="Initial Settings" Foreground="{DynamicResource AccentColorBrush}" FontSize="26" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Label Content="Starting Bet:" HorizontalAlignment="Center" Margin="96,65,289,0" VerticalAlignment="Top"/>
+            <Label Content="Chance %:" HorizontalAlignment="Center" Margin="107,96,289,0" VerticalAlignment="Top"/>
+            <Label Content="Roll:" HorizontalAlignment="Center" Margin="138,127,289,0" VerticalAlignment="Top"/>
+            <Controls:NumericUpDown x:Name="NumStartingBet" Value="0.00000001" Minimum="0.00000001" Maximum="1" Interval="0.00000001" StringFormat="0.00000000" Margin="176,65,105,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="179" ValueChanged="NumStartingBet_ValueChanged"/>
+            <Controls:NumericUpDown x:Name="NumStartingChance" Value="49.50" Minimum="0.01" Maximum="98" Interval="0.01" Margin="176,96,185,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="99" ValueChanged="NumStartingChance_ValueChanged"/>
+            <RadioButton x:Name="RadRollOver" Content="Over 50.49" HorizontalAlignment="Center" Margin="176,131,202,0" VerticalAlignment="Top" IsChecked="True" GroupName="GroupRollOverUnder" Checked="RadRollOver_CheckedChanged" Unchecked="RadRollOver_CheckedChanged" Width="82"/>
+            <RadioButton x:Name="RadRollUnder" Content="Under 49.50" HorizontalAlignment="Center" Margin="263,131,105,0" VerticalAlignment="Top" GroupName="GroupRollOverUnder" Width="92"/>
+            <Button x:Name="BtnStartStrategie" Content="Start Martingale" HorizontalAlignment="Center" Margin="0,189,350,0" VerticalAlignment="Top" Width="110" Click="BtnStartStrategie_Click"/>
+            <Button x:Name="BtnStartOneRoll" Content="Do one roll" HorizontalAlignment="Center" Margin="115,189,235,0" VerticalAlignment="Top" Width="110" Click="BtnStartOneRoll_Click"/>
+            <Button x:Name="BtnStop" Content="Stop" HorizontalAlignment="Center" Margin="235,189,115,0" VerticalAlignment="Top" Width="110" Click="BtnStop_Click" IsEnabled="False"/>
+            <Button x:Name="BtnStopOnWon" Content="Stop on won" HorizontalAlignment="Center" Margin="350,189,0,0" VerticalAlignment="Top" Width="110" IsEnabled="False" Click="BtnStopOnWon_Click"/>
+            <TextBox x:Name="txtNextBetPayout" Text="2x" Height="23" Margin="280,97,105,0" TextWrapping="Wrap"
+            	VerticalAlignment="Top" IsReadOnly="True" HorizontalAlignment="Center" Width="75" />
+            <Controls:MetroProgressBar Foreground="{DynamicResource AccentColorBrush}" x:Name="ProgressBetting" IsIndeterminate="False" Margin="0,0,-10,-3" VerticalAlignment="Bottom" Height="13" />
+
+        </Grid>
+        <Grid Grid.Row="0" Grid.Column="2" Margin="20,0,10,10">
+            <Label Content="Statistics" Foreground="{DynamicResource AccentColorBrush}" FontSize="26" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Button ToolTip="Clear Statistics" Style="{DynamicResource MetroCircleButtonStyle}" HorizontalAlignment="Left" Margin="180,0,0,184" VerticalAlignment="Bottom" Width="30" Height="30" Click="BtnClearStatistics_Click">
+                <Rectangle HorizontalAlignment="Left" Width="10" Height="10" VerticalAlignment="Bottom" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Visual="{StaticResource appbar_close}" Stretch="Fill" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
+            <Label Content="Balance:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Profit: " HorizontalAlignment="Left" Margin="10,71,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest win:" HorizontalAlignment="Left" Margin="10,92,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest loss:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest bet:" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Win/Loss:" HorizontalAlignment="Left" Margin="10,155,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest winning streak: " HorizontalAlignment="Left" Margin="10,176,0,0" VerticalAlignment="Top"/>
+            <Label Content="Biggest losing streak: " HorizontalAlignment="Left" Margin="10,197,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="LblBalance" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,50,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblProfit" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,71,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestWon" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,92,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestLost" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,113,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestBet" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,134,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblWonCounter" Content="0" Foreground="Green" HorizontalAlignment="Left" Margin="98,155,0,0" VerticalAlignment="Top" Width="58" HorizontalContentAlignment="Right"/>
+            <Label Content="/" HorizontalAlignment="Left" Margin="152,155,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="LblLostCounter" Content="0" Foreground="Red" HorizontalAlignment="Left" Margin="162,155,0,0" VerticalAlignment="Top" Width="58"/>
+            <Label x:Name="LblWinningStreakCounter" Content="0" HorizontalAlignment="Left" Margin="140,176,0,0" VerticalAlignment="Top" Width="80"/>
+            <Label x:Name="LblLosingStreakCounter" Content="0" HorizontalAlignment="Left" Margin="140,197,0,0" VerticalAlignment="Top" Width="80"/>
+        </Grid>
+        <GridSplitter Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" Width="10"/>
+
+    </Grid>
+</Controls:MetroWindow>

@@ -1,0 +1,22 @@
+﻿<Controls:MetroWindow x:Class="AutoDice.Login"
+                      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+                      BorderBrush="{DynamicResource AccentColorBrush}" BorderThickness="1"
+                      Title="AutoDice - Login" TitleCaps="False" Height="256" Width="350" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen" Loaded="MetroWindow_Loaded">
+    <Grid>
+        <Label x:Name="lblUsername" Content="Username:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="69"/>
+        <Label x:Name="lblPassword" Content="Password:" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="69"/>
+        <Label Content="2FA Code:" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top" Width="69"/>
+        <Label Content="Website:" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top" Width="69"/>
+        <TextBox x:Name="txtUsername" Height="23" Margin="84,11,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
+        <PasswordBox x:Name="txtPassword" Margin="84,41,10,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txt2fa" Height="23" Margin="84,71,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
+        <ComboBox x:Name="cmbSite" Margin="84,102,10,0" VerticalAlignment="Top" SelectionChanged="cmbSite_SelectionChanged"/>
+        <Button x:Name="btnLogin" Content="Log In" Margin="10,0,10,58" VerticalAlignment="Bottom" Height="35" Click="btnLogin_Click"/>
+        <CheckBox x:Name="chkLogin" Content="Save Login Info" Margin="10,0,0,14" Height="18" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="105" Click="chkLogin_Click"/>
+
+        <Controls:MetroProgressBar x:Name="prgLoginProgress" IsIndeterminate="false" Margin="0,0,0,40" VerticalAlignment="Bottom" Height="13"/>
+        <Label x:Name="lblStatus" Content="" Margin="120,0,10,10" VerticalAlignment="Bottom" HorizontalContentAlignment="Right"/>
+    </Grid>
+</Controls:MetroWindow>
