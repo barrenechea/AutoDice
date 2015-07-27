@@ -93,7 +93,7 @@ namespace AutoDice
         // Variables for Current roll data
         private GenericRoll _roll;
 
-        private double totalProfit;
+        private double _TotalProfit, _CurrentProfit;
 
         #endregion
 
@@ -125,6 +125,7 @@ namespace AutoDice
         #region DoWork
         private void RollWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            _CurrentProfit = 0;
             _CurrentBet = _NumStartingBet;
             _CurrentChance = _NumStartingChange;
             _CurrentMultiplier = _NumMultiplierLoss;
@@ -145,7 +146,8 @@ namespace AutoDice
                 _roll = RequestBet();
                 if (_roll.status)
                 {
-                    totalProfit += _roll.data.profit;
+                    _TotalProfit += _roll.data.profit;
+                    _CurrentProfit += _roll.data.profit;
                     if (_DoOneRoll)
                     {
                         _manuallyStopped = true;
@@ -286,13 +288,13 @@ namespace AutoDice
             if (TabGraph.IsSelected)
             {
                 _HasCleanedGraph = false;
-                Profit.Points.Add(new DoublePoint{Data = e.ProgressPercentage, Value = totalProfit});
+                Profit.Points.Add(new DoublePoint { Data = e.ProgressPercentage, Value = _CurrentProfit });
                 if (Profit.Points.Count > 100)
                 {
                     Profit.Points.RemoveAt(0);
                 }
 
-                lblAverageProfit.Content = string.Format("Average Profit: {0} / 10 minutes", ((totalProfit / e.ProgressPercentage) * betsPerSecond * 600).ToString("0.00000000"));
+                lblAverageProfit.Content = string.Format("Average Profit: {0} / 10 minutes", ((_CurrentProfit / e.ProgressPercentage) * betsPerSecond * 600).ToString("0.00000000"));
             }
             else if (!_HasCleanedGraph)
             {
@@ -404,7 +406,6 @@ namespace AutoDice
         }
         private void BtnStartStrategie_Click(object sender, RoutedEventArgs e)
         {
-            totalProfit = 0;
             _NumStartingBet = (double)NumStartingBet.Value;
             _NumStartingChange = (double)NumStartingChance.Value;
             _NumMultiplierLoss = (double)NumMultiplierLoss.Value;
@@ -1374,10 +1375,11 @@ namespace AutoDice
         private void UpdateLabels()
         {
             VerifyTip();
-            LblBalance.Content = _balance.ToString("0.00000000 BTC").Replace(",", ".");
-            LblBiggestWon.Content = _BiggestWon.ToString("0.00000000 BTC").Replace(",", ".");
-            LblBiggestLost.Content = _BiggestLost.ToString("0.00000000 BTC").Replace(",", ".");
-            LblBiggestBet.Content = _BiggestBet.ToString("0.00000000 BTC").Replace(",", ".");
+            LblBalance.Content = _balance.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
+            LblProfit.Content = _TotalProfit.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
+            LblBiggestWon.Content = _BiggestWon.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
+            LblBiggestLost.Content = _BiggestLost.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
+            LblBiggestBet.Content = _BiggestBet.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
             LblWonCounter.Content = _WonsCounter;
             LblLostCounter.Content = _LostCounter;
             LblWinningStreakCounter.Content = _MaxWinStreak;
@@ -1627,6 +1629,7 @@ namespace AutoDice
             _BiggestWon = 0;
             _WonsCounter = 0;
             _LostCounter = 0;
+            _TotalProfit = 0;
             UpdateLabels();
         }
         private void BtnClearGrid_Click(object sender, RoutedEventArgs e)
