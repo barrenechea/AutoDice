@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ using AutoDice.Sites;
 using MahApps.Metro;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using Sparrow.Chart;
 
 namespace AutoDice
@@ -71,13 +73,27 @@ namespace AutoDice
         private string _Payee;
         private double _AmountTip;
 
+        // Variables for Strategie Database
+        private readonly BackgroundWorker _cloudWorker = new BackgroundWorker();
+        private Strats _CloudStrats;
+        private GenericCheck _CloudLoadConnected;
+        private int CloudLoadMode;
+        private string _CloudLoadName;
+        private string[] CloudDownloadedStrat;
+        private int _CloudTotalBets, _CloudWinStreak, _CloudLossStreak;
+        private double _CloudProfit;
+        private string _CloudUploadName, _CloudUploadDescription, _CloudUploadMinBalance;
+        private string CloudUploadCode;
+
         // Other variables
         private readonly List<GenericDataGrid> _datosRoll = new List<GenericDataGrid>();
         private readonly BackgroundWorker _rollWorker = new BackgroundWorker();
+
         readonly BackgroundWorker _tipWorker = new BackgroundWorker();
         private GenericBalance _tipData;
         readonly IniParser _parser = new IniParser("config.ini");
         private bool _HasCleanedGraph;
+        private ProgressDialogController _controller;
 
         private int _WonsCounter, _LostCounter;
         private double _BiggestWon, _BiggestLost, _BiggestBet;
@@ -121,7 +137,6 @@ namespace AutoDice
         #endregion
 
         #region RollWorker Methods
-
         #region DoWork
         private void RollWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -146,6 +161,9 @@ namespace AutoDice
                 _roll = RequestBet();
                 if (_roll.status)
                 {
+                    _CloudTotalBets++;
+                    _CloudProfit += _roll.data.profit;
+
                     _TotalProfit += _roll.data.profit;
                     _CurrentProfit += _roll.data.profit;
                     if (_DoOneRoll)
@@ -210,6 +228,8 @@ namespace AutoDice
                             Fibonacci(false);
                         }
                     }
+                    _CloudWinStreak = _WinStreak;
+                    _CloudLossStreak = _LossStreak;
                     CheckStopConditions();
                 }
 
@@ -224,7 +244,6 @@ namespace AutoDice
             }
         }
         #endregion
-
         #region ProgressChanged
         private void RollWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
@@ -301,11 +320,10 @@ namespace AutoDice
                 RestartGraph();
                 _HasCleanedGraph = true;
             }
-            
+
             #endregion
         }
         #endregion
-
         #region RunWorkerCompleted
         private void RollWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -330,64 +348,9 @@ namespace AutoDice
             LblStatus.Content = string.Format("{0}{1} Bets Stopped.", LblStatus.Content, LblStatus.Content.ToString().Contains(".") ? string.Empty : ".");
         }
         #endregion
-
         #endregion
 
-        #region TipWorker Methods
-
-        #region DoWork
-        private void tipWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            _tipData = null;
-            _tipData = _currentSite.Tip(_Payee, _AmountTip);
-            if (_tipData.status)
-            {
-                _balance = _tipData.balance;
-            }
-        }
-
-        #endregion
-
-        #region RunWorkerCompleted
-        private void tipWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            UpdateLabels();
-            FlyoutProcessExecution.IsOpen = true;
-            ProgressTip.IsIndeterminate = false;
-            ProgressTip.Visibility = Visibility.Hidden;
-
-            if (_tipData.status)
-            {
-                lblStatusTip.Content = string.Format("Tip sent to {0}.", _Payee);
-                LblBalance.Content = _balance.ToString("0.00000000 BTC").Replace(",", ".");
-            }
-            else
-            {
-                lblStatusTip.Content = _tipData.error;
-            }
-
-            #region Generates a delay for autoclosing the Flyout
-            using (var bG = new BackgroundWorker())
-            {
-                bG.DoWork += (s, j) =>
-                {
-                    var aux = Stopwatch.StartNew();
-                    while (true) { if (aux.Elapsed.Seconds >= 5) { aux.Stop(); break; } }
-                };
-                bG.RunWorkerCompleted += (s, j) => { FlyoutProcessExecution.IsOpen = false; };
-
-                bG.RunWorkerAsync();
-            }
-
-            #endregion
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Methods
-
+        #region All other methods (It's full of shit! Expect a lot of reading here :P)
         #region Buttons Functionallities
         private void BtnStartOneRoll_Click(object sender, RoutedEventArgs e)
         {
@@ -426,7 +389,7 @@ namespace AutoDice
             }
             btnLoadSave.IsEnabled = false;
             RestartGraph();
-            
+
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.Indeterminate;
             _rollWorker.RunWorkerAsync();
             btnNormalMode.IsEnabled = false;
@@ -445,7 +408,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Martingale
 
         #region Martingale Logic
@@ -461,7 +423,7 @@ namespace AutoDice
                 {
                     _CurrentMultiplier = _NumMultiplierWon;
                 }
-                else if (_RadVariableWon && _WinStreak >= _NumAfterWon && _WinStreak % (int)_NumAfterWon == 1)
+                else if (_RadVariableWon && _WinStreak >= _NumAfterWon && _WinStreak % (int)_NumAfterWon == 0)
                 {
                     _CurrentMultiplier *= _NumMultiplierAfterWon;
                 }
@@ -510,7 +472,7 @@ namespace AutoDice
                 {
                     _CurrentMultiplier = _NumMultiplierLoss;
                 }
-                else if (_RadVariableLoss && _LossStreak >= _NumAfterLoss && _LossStreak % (int)_NumAfterLoss == 1)
+                else if (_RadVariableLoss && _LossStreak >= _NumAfterLoss && _LossStreak % (int)_NumAfterLoss == 0)
                 {
                     _CurrentMultiplier *= _NumMultiplierAfterLoss;
                 }
@@ -527,7 +489,7 @@ namespace AutoDice
                     _CurrentMultiplier = _NumMultiplierLoss;
                 }
                 _CurrentBet *= _CurrentMultiplier;
-                if (_ChkMultiplyOnlyOneTimeLoss && _RadVariableLoss && _LossStreak > 0 && _LossStreak % (int)_NumAfterLoss == 1)
+                if (_ChkMultiplyOnlyOneTimeLoss && _RadVariableLoss && _LossStreak > 0 && _LossStreak % (int)_NumAfterLoss == 0)
                 {
                     _CurrentMultiplier = _NumMultiplierLoss;
                 }
@@ -585,7 +547,6 @@ namespace AutoDice
         #endregion
 
         #endregion
-
         #region Fibonacci
 
         #region Method to Populate Fibonacci
@@ -663,7 +624,6 @@ namespace AutoDice
         #endregion
 
         #endregion
-
         #region Simulation
         private void Simulate()
         {
@@ -691,7 +651,6 @@ namespace AutoDice
             }
         }
         #endregion
-
         #region Stop Conditions
         private void CheckStopConditions()
         {
@@ -751,11 +710,8 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Methods to avoid closing window if betting
-
         private bool avoidClosing = true;
-
         protected override void OnClosing(CancelEventArgs e)
         {
             if (_rollWorker.IsBusy && avoidClosing)
@@ -785,7 +741,6 @@ namespace AutoDice
             Close();
         }
         #endregion
-
         #region Initialize BackgroundWorkers
         private void InitBackgroundWorkers()
         {
@@ -797,10 +752,77 @@ namespace AutoDice
 
             _tipWorker.DoWork += tipWorker_DoWork;
             _tipWorker.RunWorkerCompleted += tipWorker_RunWorkerCompleted;
+
+            _cloudWorker.DoWork += cloudWorker_DoWork;
+            _cloudWorker.RunWorkerCompleted += cloudWorker_RunWorkerCompleted;
+        }
+
+        #endregion
+        #region TipWorker Methods
+
+        #region DoWork
+        private void tipWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            _tipData = null;
+            _tipData = _currentSite.Tip(_Payee, _AmountTip);
+            if (_tipData.status)
+            {
+                _balance = _tipData.balance;
+            }
         }
 
         #endregion
 
+        #region RunWorkerCompleted
+        private void tipWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            UpdateLabels();
+            FlyoutProcessExecution.IsOpen = true;
+            ProgressTip.IsIndeterminate = false;
+            ProgressTip.Visibility = Visibility.Hidden;
+
+            if (_tipData.status)
+            {
+                lblStatusTip.Content = string.Format("Tip sent to {0}.", _Payee);
+                LblBalance.Content = _balance.ToString("0.00000000 BTC").Replace(",", ".");
+            }
+            else
+            {
+                lblStatusTip.Content = _tipData.error;
+            }
+
+            #region Generates a delay for autoclosing the Flyout
+            using (var bG = new BackgroundWorker())
+            {
+                bG.DoWork += (s, j) =>
+                {
+                    var aux = Stopwatch.StartNew();
+                    while (true) { if (aux.Elapsed.Seconds >= 5) { aux.Stop(); break; } }
+                };
+                bG.RunWorkerCompleted += (s, j) => { FlyoutProcessExecution.IsOpen = false; };
+
+                bG.RunWorkerAsync();
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+        #region Method to format the data sent to Da Dice
+        private static string ToServerString(double value, bool mode)
+        {
+            return mode ? value.ToString("0.00000000").Replace(",", ".") : value.ToString("0.00").Replace(",", ".");
+        }
+        #endregion
+        #region Method to request a bet
+        private GenericRoll RequestBet()
+        {
+            return _currentSite.Roll(_CurrentBet, _CurrentChance, _RollOverUnder.Equals("over"));
+        }
+
+        #endregion
         #region Window Loaded Method
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -817,12 +839,9 @@ namespace AutoDice
             btnTip.IsEnabled = _currentSite.CanTip;
             numAmountTip.Minimum = _currentSite.MinTipAmount;
             numAmountTip.Interval = _currentSite.TipAmountInterval;
-
-            ShowNormalDialog("Beta release", "This mode is currently on beta. If you found any bug, please report that to me!");
         }
 
         #endregion
-
         #region Strat System Changer Method
         private void TabStrategies_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -839,7 +858,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Values changed
 
         #region Initial Settings
@@ -862,6 +880,10 @@ namespace AutoDice
         {
             try
             {
+                _CloudTotalBets = 0;
+                _CloudWinStreak = 0;
+                _CloudLossStreak = 0;
+                _CloudProfit = 0;
                 NumStartingChance.Value = Math.Round((double)NumStartingChance.Value, 2);
                 _NumStartingChange = (double)NumStartingChance.Value;
                 _CurrentChance = _NumStartingChange;
@@ -985,6 +1007,10 @@ namespace AutoDice
         {
             try
             {
+                _CloudTotalBets = 0;
+                _CloudWinStreak = 0;
+                _CloudLossStreak = 0;
+                _CloudProfit = 0;
                 _RadMaxLoss = (bool)RadMaxLoss.IsChecked;
                 _RadVariableLoss = (bool)RadVariableLoss.IsChecked;
                 _RadConstrantLoss = (bool)RadConstrantLoss.IsChecked;
@@ -1019,6 +1045,10 @@ namespace AutoDice
         }
         private void AllLossCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
         {
+            _CloudTotalBets = 0;
+            _CloudWinStreak = 0;
+            _CloudLossStreak = 0;
+            _CloudProfit = 0;
             _ChkAfterLossesInRowChangeBet = (bool)ChkAfterLossesInRowChangeBet.IsChecked;
             _ChkAfterLossesInRowChangeChance = (bool)ChkAfterLossesInRowChangeChance.IsChecked;
             _ChkReturnBaseBetAfterFirstLoss = (bool)ChkReturnBaseBetAfterFirstLoss.IsChecked;
@@ -1272,7 +1302,6 @@ namespace AutoDice
         #endregion
 
         #endregion
-
         #region Stop Conditions
         private void ChkStopConditions_CheckedChanged(object sender, RoutedEventArgs e)
         {
@@ -1324,51 +1353,6 @@ namespace AutoDice
                 // ignored
             }
         }
-
-        #endregion
-
-        #region Others
-        private void ChkAutoScroll_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                _AutoScroll = (bool)ChkAutoScroll.IsChecked;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-        private void ChkShowWonsLosses_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                _ShowWons = (bool)ChkShowWons.IsChecked;
-                _ShowLosses = (bool)ChkShowLosses.IsChecked;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        #endregion
-
-        #region Several shit
-
-        #region Method to format the data sent to Da Dice
-        private static string ToServerString(double value, bool mode)
-        {
-            return mode ? value.ToString("0.00000000").Replace(",", ".") : value.ToString("0.00").Replace(",", ".");
-        }
-        #endregion
-        #region Method to request a bet
-        private GenericRoll RequestBet()
-        {
-            return _currentSite.Roll(_CurrentBet, _CurrentChance, _RollOverUnder.Equals("over"));
-        }
-
-        #endregion
 
         #endregion
         #region Method to update labels
@@ -1640,7 +1624,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Back to Normal Mode button
         private void btnNormalMode_Click(object sender, RoutedEventArgs e)
         {
@@ -1648,24 +1631,23 @@ namespace AutoDice
             Close();
         }
         #endregion
-
-        #endregion
-
         #region Load and Save methods
         private void SaveStratConfig(string filename)
         {
-
             using (var writer = new StreamWriter(filename))
             {
                 #region Initial Settings
+
                 writer.WriteLine("[INITIAL_SETTINGS]");
                 writer.WriteLine("_NumStartingBet = {0}", _NumStartingBet);
                 writer.WriteLine("_NumStartingChange = {0}", _NumStartingChange);
                 writer.WriteLine("_RollOverUnder = {0}", _RollOverUnder);
                 writer.WriteLine("_martingale = {0}", _martingale);
                 writer.WriteLine("_fibonacci = {0}", _fibonacci);
+
                 #endregion
                 #region Stop Conditions
+
                 writer.WriteLine("[STOP_CONDITIONS]");
                 writer.WriteLine("_ChkBalanceLimit = {0}", _ChkBalanceLimit);
                 writer.WriteLine("_NumBalanceLimit = {0}", _NumBalanceLimit);
@@ -1689,10 +1671,14 @@ namespace AutoDice
                 writer.WriteLine("_NumResetBTCProfit = {0}", _NumResetBTCProfit);
                 writer.WriteLine("_ChkResetAfterWonsInRow = {0}", _ChkResetAfterWonsInRow);
                 writer.WriteLine("_NumResetWonsInRow = {0}", _NumResetWonsInRow);
+
                 #endregion
                 #region Martingale
+
                 writer.WriteLine("[MARTINGALE]");
+
                 #region Multiply on Loss
+
                 writer.WriteLine("_NumMultiplierLoss = {0}", _NumMultiplierLoss);
                 writer.WriteLine("_NumMaxMultipliesLoss = {0}", _NumMaxMultipliesLoss);
                 writer.WriteLine("_NumAfterLoss = {0}", _NumAfterLoss);
@@ -1707,10 +1693,14 @@ namespace AutoDice
                 writer.WriteLine("_NumAfterXLossesInRowChangeBetNumber = {0}", _NumAfterXLossesInRowChangeBetNumber);
                 writer.WriteLine("_ChkAfterLossesInRowChangeChance = {0}", _ChkAfterLossesInRowChangeChance);
                 writer.WriteLine("_NumAfterXLossesInRowChangeChance = {0}", _NumAfterXLossesInRowChangeChance);
-                writer.WriteLine("_NumAfterXLossesInRowChangeChanceNumber = {0}", _NumAfterXLossesInRowChangeChanceNumber);
+                writer.WriteLine("_NumAfterXLossesInRowChangeChanceNumber = {0}",
+                    _NumAfterXLossesInRowChangeChanceNumber);
                 writer.WriteLine("_ChkReturnBaseBetAfterFirstLoss = {0}", _ChkReturnBaseBetAfterFirstLoss);
+
                 #endregion
+
                 #region Multiply on Won
+
                 writer.WriteLine("_NumMultiplierWon = {0}", _NumMultiplierWon);
                 writer.WriteLine("_NumMaxMultipliesWon = {0}", _NumMaxMultipliesWon);
                 writer.WriteLine("_NumAfterWon = {0}", _NumAfterWon);
@@ -1725,11 +1715,15 @@ namespace AutoDice
                 writer.WriteLine("_NumAfterXWonsInRowChangeBetNumber = {0}", _NumAfterXWonsInRowChangeBetNumber);
                 writer.WriteLine("_ChkAfterWonsInRowChangeChance = {0}", _ChkAfterWonsInRowChangeChance);
                 writer.WriteLine("_NumAfterXWonsInRowChangeChance = {0}", _NumAfterXWonsInRowChangeChance);
-                writer.WriteLine("_NumAfterXWonsInRowChangeChanceNumber = {0}", _NumAfterXWonsInRowChangeChanceNumber);
+                writer.WriteLine("_NumAfterXWonsInRowChangeChanceNumber = {0}",
+                    _NumAfterXWonsInRowChangeChanceNumber);
                 writer.WriteLine("_ChkReturnBaseBetAfterFirstWon = {0}", _ChkReturnBaseBetAfterFirstWon);
+
                 #endregion
+
                 #endregion
                 #region Fibonacci
+
                 writer.WriteLine("[FIBONACCI]");
                 writer.WriteLine("_ChkFibonacciLossIncrease = {0}", _ChkFibonacciLossIncrease);
                 writer.WriteLine("_NumFibonacciIncrementLoss = {0}", _NumFibonacciIncrementLoss);
@@ -1743,6 +1737,7 @@ namespace AutoDice
                 writer.WriteLine("_NumFibonacciWhenLevel = {0}", _NumFibonacciWhenLevel);
                 writer.WriteLine("_ChkFibonacciWhenLevelReset = {0}", _ChkFibonacciWhenLevelReset);
                 writer.WriteLine("_ChkFibonacciWhenLevelStop = {0}", _ChkFibonacciWhenLevelStop);
+
                 #endregion
                 writer.Close();
             }
@@ -1894,13 +1889,278 @@ namespace AutoDice
 
 
         #endregion
+        #region Online Database methods
+        #region Load Online Strat
+        private async void CloudLoad_Click(object sender, RoutedEventArgs e)
+        {
+            FlyoutLoadSave.IsOpen = false;
+            _controller = await this.ShowProgressAsync("Please wait", "Connecting with Strategies Database...");
+            CloudLoadMode = 1;
+            _cloudWorker.RunWorkerAsync();
+        }
+        private void cmbCloudStrategies_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbCloudStrategies.SelectedIndex != -1)
+            {
+                var aux = (Strategy)cmbCloudStrategies.SelectedItem;
+                lblCloudName.Content = Base64Decode(aux.name);
+                lblCloudDescription.Text = Base64Decode(aux.description);
+                lblCloudMinBalance.Content = aux.minbalance;
+                lblCloudAuthor.Content = aux.author;
+                lblCloudTotalBets.Content = aux.totalbets;
+                lblCloudProfit.Content = aux.profit;
+                lblCloudWinStreak.Content = aux.biggestwinstreak;
+                lblCloudLossStreak.Content = aux.biggestlossstreak;
+                btnCloudLoadStrat.IsEnabled = true;
+                _CloudLoadName = aux.name;
+            }
+            else
+            {
+                lblCloudName.Content = string.Empty;
+                lblCloudDescription.Text = string.Empty;
+                lblCloudMinBalance.Content = string.Empty;
+                lblCloudAuthor.Content = string.Empty;
+                lblCloudTotalBets.Content = string.Empty;
+                lblCloudProfit.Content = string.Empty;
+                lblCloudWinStreak.Content = string.Empty;
+                lblCloudLossStreak.Content = string.Empty;
+                btnCloudLoadStrat.IsEnabled = false;
+            }
+        }
+        private async void btnCloudLoadStrat_Click(object sender, RoutedEventArgs e)
+        {
+            if (_balance < double.Parse((string)lblCloudMinBalance.Content, CultureInfo.InvariantCulture))
+            {
+                var mySettings = new MetroDialogSettings()
+                {
+                    AffirmativeButtonText = "Of course, YOLO!",
+                    NegativeButtonText = "Nah, I'm a pussy",
+                    ColorScheme = MetroDialogOptions.ColorScheme
+                };
 
+                var result = await this.ShowMessageAsync("Warning", "Your balance does not meet the authors suggested minimum. Are you sure you wish to load this strategy?",
+                MessageDialogStyle.AffirmativeAndNegative, mySettings);
+
+                if (result != MessageDialogResult.Affirmative) return;
+            }
+            FlyoutCloudLoad.IsOpen = false;
+            _controller = await this.ShowProgressAsync("Please wait", string.Format("Loading {0}...", Base64Decode(((Strategy)cmbCloudStrategies.SelectedItem).name)));
+            CloudLoadMode = 2;
+            _cloudWorker.RunWorkerAsync();
+        }
+        #endregion
+        #region Upload Strat
+        private void CloudUpload_Click(object sender, RoutedEventArgs e)
+        {
+            var minAmount = _username.ToLower().Equals("sbarrenechea") ? 0 : 1000;
+            FlyoutLoadSave.IsOpen = false;
+            if (_CloudTotalBets >= minAmount)
+            {
+                TxtCloudUploadName.Text = string.Empty;
+                TxtCloudUploadDescription.Text = string.Empty;
+                NumCloudUploadMinBalance.Value = 0.00000001;
+                FlyoutCloudUpload.IsOpen = true;
+            }
+            else
+            {
+                ShowNormalDialog("Error", string.Format("You must roll at least {0} times before being able to upload your current strategie.", minAmount));
+            }
+        }
+        private async void btnUploadStrat_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtCloudUploadName.Text.Equals(string.Empty))
+            {
+                ShowNormalDialog("Error", "Please enter a Strat Name");
+                return;
+            }
+            if (TxtCloudUploadDescription.Text.Equals(string.Empty))
+            {
+                ShowNormalDialog("Error", "Please enter a Strat Description");
+                return;
+            }
+            _CloudUploadName = TxtCloudUploadName.Text;
+            _CloudUploadDescription = TxtCloudUploadDescription.Text;
+            _CloudUploadMinBalance = ((double)NumCloudUploadMinBalance.Value).ToString("0.00000000", CultureInfo.InvariantCulture);
+            CloudLoadMode = 3;
+            _controller = await this.ShowProgressAsync("Please wait", string.Format("Uploading {0}...", TxtCloudUploadName.Text));
+            GenerateUploadText();
+            _cloudWorker.RunWorkerAsync();
+        }
+        private void GenerateUploadText()
+        {
+            SaveStratConfig("cloudstrat.ini");
+            CloudUploadCode = File.ReadAllText("cloudstrat.ini");
+            File.Delete("cloudstrat.ini");
+        }
+        #endregion
+        #region CloudWorker
+        private void cloudWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            using (var web = new HttpClient())
+            {
+                switch (CloudLoadMode)
+                {
+                    case 1:
+                        _CloudStrats = null;
+                        _CloudLoadConnected = null;
+                        try
+                        {
+                            _CloudStrats = JsonConvert.DeserializeObject<Strats>(web.GetAsync("http://www.autodice.net/internal/stratdb?getdetails").Result.Content.ReadAsStringAsync().Result);
+                            _CloudLoadConnected = new GenericCheck { status = true };
+                        }
+                        catch
+                        {
+                            _CloudLoadConnected = new GenericCheck
+                            {
+                                status = false,
+                                error = "Unable to connect to Strategies Database."
+                            };
+                        }
+                        break;
+                    case 2:
+                        CloudDownloadedStrat = null;
+                        CloudDownloadedStrat = web.GetAsync(string.Format("http://www.autodice.net/internal/stratdb?getstrat&name={0}", _CloudLoadName)).Result.Content.ReadAsStringAsync().Result.Split('\n');
+                        break;
+                    case 3:
+                        var contentStrat = new FormUrlEncodedContent(new[]
+                        {
+                            new KeyValuePair<string, string>("name", Base64Encode(_CloudUploadName)),
+                            new KeyValuePair<string, string>("description", Base64Encode(_CloudUploadDescription)),
+                            new KeyValuePair<string, string>("author", _username),
+                            new KeyValuePair<string, string>("minbalance", _CloudUploadMinBalance),
+                            new KeyValuePair<string, string>("totalbets", _CloudTotalBets.ToString()),
+                            new KeyValuePair<string, string>("profit", _CloudProfit.ToString("0.00000000", CultureInfo.InvariantCulture)),
+                            new KeyValuePair<string, string>("biggestwinstreak", _CloudWinStreak.ToString()),
+                            new KeyValuePair<string, string>("biggestlossstreak", _CloudLossStreak.ToString()),
+                            new KeyValuePair<string, string>("code", CloudUploadCode)
+                        });
+                        try
+                        {
+                            _CloudLoadConnected = null;
+                            var resultContent = web.PostAsync("http://www.autodice.net/internal/stratdb?setstrat", contentStrat).Result.Content.ReadAsStringAsync().Result;
+                            _CloudLoadConnected = new GenericCheck { status = true, error = resultContent };
+                        }
+                        catch
+                        {
+                            _CloudLoadConnected = new GenericCheck { status = false, error = "Unable to connect with Strat Database" };
+                        }
+                        break;
+                }
+            }
+        }
+        private async void cloudWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            await _controller.CloseAsync();
+            switch (CloudLoadMode)
+            {
+                case 1:
+                    if (_CloudLoadConnected.status)
+                    {
+                        cmbCloudStrategies.ItemsSource = null;
+                        cmbCloudStrategies.ItemsSource = _CloudStrats.strategies;
+                        cmbCloudStrategies.SelectedIndex = -1;
+                        FlyoutCloudLoad.IsOpen = true;
+                    }
+                    else
+                    {
+                        ShowNormalDialog("Error", _CloudLoadConnected.error);
+                    }
+                    break;
+                case 2:
+                    if (CloudDownloadedStrat != null)
+                    {
+                        using (var writer = new StreamWriter("cloudstrat.ini"))
+                        {
+                            foreach (var line in CloudDownloadedStrat)
+                            {
+                                writer.WriteLine(line);
+                            }
+                        }
+                        LoadStratConfig("cloudstrat.ini");
+                        File.Delete("cloudstrat.ini");
+                    }
+                    else
+                    {
+                        ShowNormalDialog("Error", "Something weird as fuck happened and the app can't load that strat. Sorry! :(");
+                    }
+                    ClearCloudVariables();
+                    break;
+                case 3:
+                    if (_CloudLoadConnected.error.Contains("successfully"))
+                    {
+                        FlyoutCloudUpload.IsOpen = false;
+                        ClearCloudVariables();
+                    }
+                    ShowNormalDialog(_CloudLoadConnected.status ? "Message" : "Error", _CloudLoadConnected.error);
+                    break;
+            }
+        }
+        #endregion
+        #region Clear Variables Method
+        private void ClearCloudVariables()
+        {
+            _CloudStrats = null;
+            _CloudLoadConnected = null;
+            CloudLoadMode = 0;
+            CloudDownloadedStrat = null;
+            _CloudTotalBets = 0;
+            _CloudWinStreak = 0;
+            _CloudLossStreak = 0;
+            _CloudProfit = 0;
+            _CloudUploadName = string.Empty;
+            _CloudUploadDescription = string.Empty;
+            _CloudUploadMinBalance = string.Empty;
+            CloudUploadCode = string.Empty;
+
+        }
+        #endregion
+        #endregion
         #region Restart Graph
         private void RestartGraph()
         {
             lblAverageProfit.Content = string.Empty;
             Profit.Points.Clear();
         }
+        #endregion
+        #region Others
+        #region Base64 functions
+        private static string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return Convert.ToBase64String(plainTextBytes);
+        }
+        private static string Base64Decode(string base64EncodedData)
+        {
+            var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
+            return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+        #endregion
+        #region Random Things
+        private void ChkAutoScroll_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _AutoScroll = (bool)ChkAutoScroll.IsChecked;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        private void ChkShowWonsLosses_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _ShowWons = (bool)ChkShowWons.IsChecked;
+                _ShowLosses = (bool)ChkShowLosses.IsChecked;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        #endregion
+        #endregion
         #endregion
     }
 }

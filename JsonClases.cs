@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -234,7 +235,27 @@ namespace AutoDice
         #endregion
     }
     #endregion
-
+    #region Strat Database Classes
+    public class Strats
+    {
+        public Strategy[] strategies { get; set; }
+    }
+    public class Strategy
+    {
+        public string name { get; set; }
+        public string description { get; set; }
+        public string author { get; set; }
+        public string minbalance { get; set; }
+        public string totalbets { get; set; }
+        public string profit { get; set; }
+        public string biggestwinstreak { get; set; }
+        public string biggestlossstreak { get; set; }
+        public override string ToString()
+        {
+            return string.Format("{0} [by {1}]", System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(name)), author);
+        }
+    }
+    #endregion
 
     #region UIHelper
     public static class UIHelpers

@@ -62,7 +62,7 @@
     </Controls:MetroWindow.RightWindowCommands>
     <Controls:MetroWindow.Flyouts>
         <Controls:FlyoutsControl>
-            <Controls:Flyout x:Name="FlyoutLoadSave" Position="Top" Height="70" Width="210" Theme="Inverse">
+            <Controls:Flyout x:Name="FlyoutLoadSave" Position="Top" Height="70" Width="350" Theme="Inverse">
                 <Grid>
                     <Button ToolTip="Load Strategie" Style="{DynamicResource MetroCircleButtonStyle}" Width="50" Height="50" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top" Click="BtnLoadStrategie_Click">
                         <Rectangle Width="20" Margin="3,2,0,0"
@@ -81,6 +81,24 @@
                             <Rectangle.OpacityMask>
                                 <VisualBrush Stretch="Fill"
                                          Visual="{DynamicResource appbar_disk_save}" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+                    </Button>
+                    <Button ToolTip="Load from Strat Database" Style="{DynamicResource MetroCircleButtonStyle}" Width="50" Height="50" HorizontalAlignment="Left" Margin="140,10,0,0" VerticalAlignment="Top" Click="CloudLoad_Click">
+                        <Rectangle Width="25" Margin="0" Height="13"
+                               Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <Rectangle.OpacityMask>
+                                <VisualBrush Stretch="Fill"
+                                         Visual="{DynamicResource appbar_cloud_download}" />
+                            </Rectangle.OpacityMask>
+                        </Rectangle>
+                    </Button>
+                    <Button ToolTip="Upload to Strat Database" Style="{DynamicResource MetroCircleButtonStyle}" Width="50" Height="50" HorizontalAlignment="Left" Margin="210,10,0,0" VerticalAlignment="Top" Click="CloudUpload_Click">
+                        <Rectangle Width="25" Margin="0" Height="13"
+                               Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                            <Rectangle.OpacityMask>
+                                <VisualBrush Stretch="Fill"
+                                         Visual="{DynamicResource appbar_cloud_upload}" />
                             </Rectangle.OpacityMask>
                         </Rectangle>
                     </Button>
@@ -141,6 +159,41 @@
                               VerticalAlignment="Top" />
                     <Controls:NumericUpDown x:Name="NumDelay" Minimum="1" Maximum="5" Interval="0.01" Value="3"
                                             Margin="180,118,72,0" VerticalAlignment="Top" ValueChanged="NumStartingChance_ValueChanged"/>
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="FlyoutCloudLoad" Position="Top" Height="425" Width="440" Theme="Inverse">
+                <Grid>
+                    <Label Content="Strategie:" Margin="10,10,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Name:" Margin="10,36,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Description:" Margin="10,62,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Min. Balance:" Margin="10,223,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Author:" Margin="10,249,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Statistics of Author:" Margin="10,275,237,0" VerticalAlignment="Top"/>
+                    <Label Content="Total bets:" Margin="128,275,96,0" VerticalAlignment="Top"/>
+                    <Label Content="Profit:" Margin="128,301,96,0" VerticalAlignment="Top"/>
+                    <Label Content="Biggest Winning Streak:" Margin="128,327,96,0" VerticalAlignment="Top"/>
+                    <Label Content="Biggest Losing Streak:" Margin="128,353,96,0" VerticalAlignment="Top"/>
+                    <ComboBox x:Name="cmbCloudStrategies" Margin="95,10,10,0" VerticalAlignment="Top" SelectionChanged="cmbCloudStrategies_SelectionChanged"/>
+                    <Label x:Name="lblCloudName" Margin="95,36,10,0" VerticalAlignment="Top"/>
+                    <TextBlock x:Name="lblCloudDescription" Margin="95,67,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="156"/>
+                    <Label x:Name="lblCloudMinBalance" Margin="98,223,10,0" VerticalAlignment="Top"/>
+                    <Label x:Name="lblCloudAuthor" Margin="98,249,10,0" VerticalAlignment="Top"/>
+                    <Label x:Name="lblCloudTotalBets" Margin="269,275,10,0" VerticalAlignment="Top"/>
+                    <Label x:Name="lblCloudProfit" Margin="269,301,10,0" VerticalAlignment="Top"/>
+                    <Label x:Name="lblCloudWinStreak" Margin="269,327,10,0" VerticalAlignment="Top"/>
+                    <Label x:Name="lblCloudLossStreak" Margin="269,353,10,0" VerticalAlignment="Top"/>
+                    <Button x:Name="btnCloudLoadStrat" Content="LOAD THIS STRATEGIE" IsEnabled="False" Margin="10,0,10,10" VerticalAlignment="Bottom" Click="btnCloudLoadStrat_Click"/>
+                </Grid>
+            </Controls:Flyout>
+            <Controls:Flyout x:Name="FlyoutCloudUpload" Position="Top" Height="290" Width="440" Theme="Inverse">
+                <Grid>
+                    <Label Content="Strat Name:" Margin="10,10,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Description:" Margin="10,41,270,0" VerticalAlignment="Top"/>
+                    <Label Content="Min. Balance:" Margin="10,217,270,0" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TxtCloudUploadName" Height="23" Margin="95,11,10,0" TextWrapping="Wrap" MaxLength="20" VerticalAlignment="Top"/>
+                    <TextBox x:Name="TxtCloudUploadDescription" Height="170" Margin="95,42,10,0" TextWrapping="Wrap" MaxLength="400" VerticalAlignment="Top"/>
+                    <Controls:NumericUpDown x:Name="NumCloudUploadMinBalance" Value="0.00000001" Minimum="0.00000001" Maximum="1000" Interval="0.00000001" StringFormat="0.00000000" Margin="95,217,10,0" VerticalAlignment="Top" HorizontalAlignment="Center" Width="255"/>
+                    <Button x:Name="btnUploadStrat" Content="UPLOAD STRATEGIE" Margin="10,0,10,10" Height="25" VerticalAlignment="Bottom" Click="btnUploadStrat_Click"/>
                 </Grid>
             </Controls:Flyout>
         </Controls:FlyoutsControl>

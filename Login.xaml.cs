@@ -262,7 +262,7 @@ namespace AutoDice
             AutoDiceServer();
         }
 
-        private static string GetMD5HashFromFile(string fileName)
+        private static string GetSHAHashFromFile(string fileName)
         {
             using (var sha = new SHA256Managed())
             {
@@ -272,7 +272,6 @@ namespace AutoDice
                 }
             }
         }
-
         private void FillComboBox()
         {
             var SitesList = new List<SiteList>
@@ -362,7 +361,7 @@ namespace AutoDice
                 lblStatus.ToolTip = "The app was unable to verify this version at AutoDice server";
                 lblStatus.Foreground = Brushes.Orange;
             }
-            else if (!_sha256.ToLower().Equals(GetMD5HashFromFile(AppDomain.CurrentDomain.FriendlyName).ToLower()))
+            else if (!_sha256.ToLower().Equals(GetSHAHashFromFile(AppDomain.CurrentDomain.FriendlyName).ToLower()))
             {
                 lblStatus.Content = "This is a recompiled version!";
                 lblStatus.ToolTip = "This version is not compiled by me. Use at your own risk!";
