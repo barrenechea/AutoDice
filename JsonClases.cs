@@ -106,13 +106,19 @@ namespace AutoDice
         public string errorCode { get; set; }
         public string errorMsg { get; set; }
         public string id { get; set; }
+        public string api_enable { get; set; }
+        public string active_bet_dice { get; set; }
+        public string active_bet_horse { get; set; }
+        public string active_bet_plinko { get; set; }
         public string balance { get; set; }
         public string alias { get; set; }
         public string vip_level { get; set; }
-        public object vip_granted { get; set; }
+        public string vip_granted { get; set; }
         public string time_created { get; set; }
         public string time_last_active { get; set; }
         public string access_token_api { get; set; }
+        public string conf_token_mp_hash { get; set; }
+        public string login_ip { get; set; }
         public string client_seed { get; set; }
         public string client_seed_sequence { get; set; }
         public string client_seed_date { get; set; }
@@ -127,8 +133,6 @@ namespace AutoDice
         public string total_wins { get; set; }
         public string total_profit { get; set; }
     }
-
-
     #endregion
     #region Roll
     public class BetterBetsAPIRoll
@@ -252,7 +256,7 @@ namespace AutoDice
         public string biggestlossstreak { get; set; }
         public override string ToString()
         {
-            return string.Format("{0} [by {1}]", System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(name)), author);
+            return $"{System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(name))} [by {author}]";
         }
     }
     #endregion

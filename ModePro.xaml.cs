@@ -131,7 +131,7 @@ namespace AutoDice
             InitBackgroundWorkers();
             InitThemeSettings();
 
-            Title = string.Format("AutoDice Pro: {0}", _username);
+            Title = $"AutoDice Pro: {_username}";
         }
 
         #endregion
@@ -250,7 +250,7 @@ namespace AutoDice
             UpdateLabels();
             #region Update Speed label
             var betsPerSecond = Math.Round((e.ProgressPercentage / (DateTime.Now - _initialDateTime).TotalSeconds), 2, MidpointRounding.AwayFromZero);
-            lblSpeed.Content = string.Format("{0} Bet{1}/s", betsPerSecond, betsPerSecond <= 1 ? string.Empty : "s");
+            lblSpeed.Content = $"{betsPerSecond} Bet{(betsPerSecond <= 1 ? string.Empty : "s")}/s";
 
             #endregion
             #region Datagrid
@@ -264,7 +264,7 @@ namespace AutoDice
                     profit = _roll.data.profit.ToString("0.00000000", CultureInfo.InvariantCulture),
                     result = _roll.data.result,
                     bet = _roll.data.bet,
-                    chance = string.Format("{0}%", _roll.data.chance),
+                    chance = $"{_roll.data.chance}%",
                     id = _roll.data.id,
                     hour = DateTime.Now.ToString("HH:mm:ss", DateTimeFormatInfo.InvariantInfo)
                 };
@@ -288,12 +288,12 @@ namespace AutoDice
 
             if (_roll.status && _roll.data != null)
             {
-                LblStatus.Content = string.Format("Bet {0}: {1}", e.ProgressPercentage, _roll.data.status);
+                LblStatus.Content = $"Bet {e.ProgressPercentage}: {_roll.data.status}";
                 LblStatus.Foreground = _roll.data.status.Equals("WIN") ? Brushes.Green : Brushes.Red;
             }
             else
             {
-                LblStatus.Content = string.Format("Bet {0}: {1} [Retrying]", e.ProgressPercentage + 1, _roll.error);
+                LblStatus.Content = $"Bet {e.ProgressPercentage + 1}: {_roll.error} [Retrying]";
                 LblStatus.Foreground = Brushes.Orange;
             }
             #endregion
@@ -304,7 +304,7 @@ namespace AutoDice
             }
             #endregion
             #region Graph Update
-            if (TabGraph.IsSelected)
+            if (TabGraph.IsSelected && _roll.status)
             {
                 _HasCleanedGraph = false;
                 Profit.Points.Add(new DoublePoint { Data = e.ProgressPercentage, Value = _CurrentProfit });
@@ -313,7 +313,8 @@ namespace AutoDice
                     Profit.Points.RemoveAt(0);
                 }
 
-                lblAverageProfit.Content = string.Format("Average Profit: {0} / 10 minutes", ((_CurrentProfit / e.ProgressPercentage) * betsPerSecond * 600).ToString("0.00000000"));
+                lblAverageProfit.Content =
+                    $"Average Profit: {((_CurrentProfit/e.ProgressPercentage)*betsPerSecond*600).ToString("0.00000000")} / 10 minutes";
             }
             else if (!_HasCleanedGraph)
             {
@@ -345,7 +346,8 @@ namespace AutoDice
             }
             btnLoadSave.IsEnabled = true;
             LblStatus.Content = LblStatus.Content.ToString().Replace(" [Retrying]", String.Empty);
-            LblStatus.Content = string.Format("{0}{1} Bets Stopped.", LblStatus.Content, LblStatus.Content.ToString().Contains(".") ? string.Empty : ".");
+            LblStatus.Content =
+                $"{LblStatus.Content}{(LblStatus.Content.ToString().Contains(".") ? string.Empty : ".")} Bets Stopped.";
         }
         #endregion
         #endregion
@@ -537,7 +539,8 @@ namespace AutoDice
             _LossStreak = 0;
             _CurrentMultiplier = _NumMultiplierLoss;
             _CurrentBet = _NumStartingBet;
-            ShowNormalDialog("Martingale Check", string.Format("With your current balance, you can hold on {0} loses in a row. If you lose at bet number {1}, your remaining balance will be {2} BTC.", contador - 1, contador, aux.ToString("0.00000000").Replace(",", ".")));
+            ShowNormalDialog("Martingale Check",
+                $"With your current balance, you can hold on {contador - 1} loses in a row. If you lose at bet number {contador}, your remaining balance will be {aux.ToString("0.00000000").Replace(",", ".")} BTC.");
         }
         private void BtnCheckMartingale_Click(object sender, RoutedEventArgs e)
         {
@@ -557,7 +560,7 @@ namespace AutoDice
             lstFibonacci.Items.Clear();
             for (var i = 1; i <= 50; i++)
             {
-                lstFibonacci.Items.Add(string.Format("{0}. {1}", i, ToServerString(Current, true)));
+                lstFibonacci.Items.Add($"{i}. {ToServerString(Current, true)}");
                 var tmp = Current;
                 Current += Previous;
                 Previous = tmp;
@@ -642,7 +645,8 @@ namespace AutoDice
             _LossStreak = 0;
             _CurrentMultiplier = _NumMultiplierLoss;
             _CurrentBet = _NumStartingBet;
-            ShowNormalDialog("Martingale Check", string.Format("With your current balance, you can hold on {0} loses in a row. If you lose at bet number {1}, your remaining balance will be {2} BTC.", contador - 1, contador, aux.ToString("0.00000000").Replace(",", ".")));
+            ShowNormalDialog("Martingale Check",
+                $"With your current balance, you can hold on {contador - 1} loses in a row. If you lose at bet number {contador}, your remaining balance will be {aux.ToString("0.00000000").Replace(",", ".")} BTC.");
 
             while (true)
             {
@@ -721,6 +725,7 @@ namespace AutoDice
             }
             else
             {
+                _currentSite.Disconnect();
                 e.Cancel = false;
             }
         }
@@ -738,6 +743,7 @@ namespace AutoDice
 
             if (result != MessageDialogResult.Affirmative) return;
             avoidClosing = false;
+            _currentSite.Disconnect();
             Close();
         }
         #endregion
@@ -759,7 +765,6 @@ namespace AutoDice
 
         #endregion
         #region TipWorker Methods
-
         #region DoWork
         private void tipWorker_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -772,7 +777,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region RunWorkerCompleted
         private void tipWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -783,7 +787,7 @@ namespace AutoDice
 
             if (_tipData.status)
             {
-                lblStatusTip.Content = string.Format("Tip sent to {0}.", _Payee);
+                lblStatusTip.Content = $"Tip sent to {_Payee}.";
                 LblBalance.Content = _balance.ToString("0.00000000 BTC").Replace(",", ".");
             }
             else
@@ -829,7 +833,8 @@ namespace AutoDice
             GridBets.ItemsSource = _datosRoll;
             UpdateLabels();
             PopulateFibonacci(_NumStartingBet);
-            lblVersion.Content = string.Format("Version {0} by @sbarrenechea", Assembly.GetExecutingAssembly().GetName().Version.ToString().Remove(5));
+            lblVersion.Content =
+                $"Version {Assembly.GetExecutingAssembly().GetName().Version.ToString().Remove(5)} by @sbarrenechea";
             if (File.Exists("default.ini"))
             {
                 LoadStratConfig("default.ini");
@@ -859,7 +864,6 @@ namespace AutoDice
 
         #endregion
         #region Values changed
-
         #region Initial Settings
         private void NumStartingBet_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
@@ -887,10 +891,10 @@ namespace AutoDice
                 NumStartingChance.Value = Math.Round((double)NumStartingChance.Value, 2);
                 _NumStartingChange = (double)NumStartingChance.Value;
                 _CurrentChance = _NumStartingChange;
-                txtNextBetPayout.Text = string.Format("{0}x", CalculatePayout(_NumStartingChange));
+                txtNextBetPayout.Text = $"{CalculatePayout(_NumStartingChange)}x";
                 _delay = (double)NumDelay.Value;
-                RadRollOver.Content = string.Format("Over {0}", (99.99 - _NumStartingChange).ToString("0.00").Replace(",", "."));
-                RadRollUnder.Content = string.Format("Under {0}", _NumStartingChange.ToString("0.00").Replace(",", "."));
+                RadRollOver.Content = $"Over {(99.99 - _NumStartingChange).ToString("0.00").Replace(",", ".")}";
+                RadRollUnder.Content = $"Under {_NumStartingChange.ToString("0.00").Replace(",", ".")}";
             }
             catch
             {
@@ -909,7 +913,6 @@ namespace AutoDice
             }
         }
         #endregion
-
         #region Martingale - On loss
         private void NumMultiplierLoss_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
@@ -1070,7 +1073,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Martingale - On won
         private void NumMultiplierWon_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
@@ -1214,7 +1216,6 @@ namespace AutoDice
             }
         }
         #endregion
-
         #region Fibonacci Stuff
         private void ChkFibonacciLoss_CheckedChanged(object sender, RoutedEventArgs e)
         {
@@ -1300,7 +1301,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #endregion
         #region Stop Conditions
         private void ChkStopConditions_CheckedChanged(object sender, RoutedEventArgs e)
@@ -1462,7 +1462,7 @@ namespace AutoDice
             FlyoutProcessExecution.IsOpen = true;
             ProgressTip.IsIndeterminate = true;
             ProgressTip.Visibility = Visibility.Visible;
-            lblStatusTip.Content = string.Format("Sending tip to {0}...", _Payee);
+            lblStatusTip.Content = $"Sending tip to {_Payee}...";
             _tipWorker.RunWorkerAsync();
         }
 
@@ -1637,14 +1637,12 @@ namespace AutoDice
             using (var writer = new StreamWriter(filename))
             {
                 #region Initial Settings
-
                 writer.WriteLine("[INITIAL_SETTINGS]");
                 writer.WriteLine("_NumStartingBet = {0}", _NumStartingBet);
                 writer.WriteLine("_NumStartingChange = {0}", _NumStartingChange);
                 writer.WriteLine("_RollOverUnder = {0}", _RollOverUnder);
                 writer.WriteLine("_martingale = {0}", _martingale);
                 writer.WriteLine("_fibonacci = {0}", _fibonacci);
-
                 #endregion
                 #region Stop Conditions
 
@@ -1944,7 +1942,8 @@ namespace AutoDice
                 if (result != MessageDialogResult.Affirmative) return;
             }
             FlyoutCloudLoad.IsOpen = false;
-            _controller = await this.ShowProgressAsync("Please wait", string.Format("Loading {0}...", Base64Decode(((Strategy)cmbCloudStrategies.SelectedItem).name)));
+            _controller = await this.ShowProgressAsync("Please wait",
+                $"Loading {Base64Decode(((Strategy) cmbCloudStrategies.SelectedItem).name)}...");
             CloudLoadMode = 2;
             _cloudWorker.RunWorkerAsync();
         }
@@ -1963,7 +1962,8 @@ namespace AutoDice
             }
             else
             {
-                ShowNormalDialog("Error", string.Format("You must roll at least {0} times before being able to upload your current strategie.", minAmount));
+                ShowNormalDialog("Error",
+                    $"You must roll at least {minAmount} times before being able to upload your current strategie.");
             }
         }
         private async void btnUploadStrat_Click(object sender, RoutedEventArgs e)
@@ -1982,7 +1982,7 @@ namespace AutoDice
             _CloudUploadDescription = TxtCloudUploadDescription.Text;
             _CloudUploadMinBalance = ((double)NumCloudUploadMinBalance.Value).ToString("0.00000000", CultureInfo.InvariantCulture);
             CloudLoadMode = 3;
-            _controller = await this.ShowProgressAsync("Please wait", string.Format("Uploading {0}...", TxtCloudUploadName.Text));
+            _controller = await this.ShowProgressAsync("Please wait", $"Uploading {TxtCloudUploadName.Text}...");
             GenerateUploadText();
             _cloudWorker.RunWorkerAsync();
         }
@@ -2019,7 +2019,8 @@ namespace AutoDice
                         break;
                     case 2:
                         CloudDownloadedStrat = null;
-                        CloudDownloadedStrat = web.GetAsync(string.Format("http://www.autodice.net/internal/stratdb?getstrat&name={0}", _CloudLoadName)).Result.Content.ReadAsStringAsync().Result.Split('\n');
+                        CloudDownloadedStrat = web.GetAsync(
+                            $"http://www.autodice.net/internal/stratdb?getstrat&name={_CloudLoadName}").Result.Content.ReadAsStringAsync().Result.Split('\n');
                         break;
                     case 3:
                         var contentStrat = new FormUrlEncodedContent(new[]

@@ -304,8 +304,8 @@ namespace AutoDice
         }
         private void RenamePasswordLabel()
         {
-            lblUsername.Content = string.Format("{0}:", ((SiteList)cmbSite.SelectedItem).userlabel);
-            lblPassword.Content = string.Format("{0}:", ((SiteList)cmbSite.SelectedItem).passlabel);
+            lblUsername.Content = $"{((SiteList) cmbSite.SelectedItem).userlabel}:";
+            lblPassword.Content = $"{((SiteList) cmbSite.SelectedItem).passlabel}:";
         }
 
         private void cmbSite_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -336,7 +336,8 @@ namespace AutoDice
                 using (var web = new WebClient())
                 {
                     _currentVersion = web.DownloadString("http://www.autodice.net/internal/request?getcurrentversion");
-                    _sha256 = web.DownloadString(string.Format("http://www.autodice.net/internal/request?checksha256&version={0}", Assembly.GetExecutingAssembly().GetName().Version));
+                    _sha256 = web.DownloadString(
+                        $"http://www.autodice.net/internal/request?checksha256&version={Assembly.GetExecutingAssembly().GetName().Version}");
                 }
             }
             catch

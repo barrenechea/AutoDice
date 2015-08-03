@@ -1,5 +1,6 @@
-﻿using System.Globalization;
+﻿using System.Collections.Specialized;
 using System.Net;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace AutoDice.Sites
@@ -14,33 +15,15 @@ namespace AutoDice.Sites
             CanTip = true;
             MinTipAmount = 0.00050000;
             TipAmountInterval = 0.00050000;
-            var url = string.Format("https://dadice.com/api/balance?username={0}&key={1}", username, password);
-            try
-            {
-                var aux = JsonConvert.DeserializeObject<DaDiceAPIBalance>(client.DownloadString(url));
-                _username = username;
-                _apikey = password;
-                return new GenericCheck
-                {
-                    status = aux.status,
-                    username = username,
-                    error = aux.error
-                };
-            }
-            catch
-            {
-                return new GenericCheck
-                {
-                    status = false,
-                    error = "Unable to connect"
-                };
-            }
+            _username = username;
+            _apikey = password;
+            return new GenericCheck { status = true, username = username };
         }
         public override GenericBalance Balance()
         {
             try
             {
-                var url = string.Format("https://dadice.com/api/balance?username={0}&key={1}", _username, _apikey);
+                var url = $"https://dadice.com/api/balance?username={_username}&key={_apikey}";
                 var aux = JsonConvert.DeserializeObject<DaDiceAPIBalance>(client.DownloadString(url));
                 return new GenericBalance { status = aux.status, balance = aux.balance, error = aux.error};
             }
@@ -51,10 +34,18 @@ namespace AutoDice.Sites
         }
         public override GenericRoll Roll(double amount, double chance, bool overUnder)
         {
-            var url = string.Format("https://dadice.com/api/roll?username={0}&key={1}&amount={2}&chance={3}&bet={4}", _username, _apikey, ToServerString(amount, true), ToServerString(chance, false), overUnder ? "over" : "under");
+            var rollParameters = new NameValueCollection
+            {
+                {"username", _username},
+                {"key", _apikey},
+                {"amount", ToServerString(amount, true)},
+                {"chance", ToServerString(chance, false)},
+                {"bet", overUnder ? "over" : "under"}
+            };
             try
             {
-                var roll = JsonConvert.DeserializeObject<DaDiceAPIRoll>(client.DownloadString(url));
+                var aux = Encoding.UTF8.GetString(client.UploadValues("https://dadice.com/api/roll", rollParameters));
+                var roll = JsonConvert.DeserializeObject<DaDiceAPIRoll>(aux);
                 return new GenericRoll
                 {
                     status = roll.status,
@@ -64,12 +55,12 @@ namespace AutoDice.Sites
                     {
                         status = roll.roll.status.Equals("WON") ? "WIN" : "LOSS",
                         amount = roll.roll.amount,
-                        bet = roll.roll.bet,
-                        chance = double.Parse(roll.roll.bet.Replace(",", "."), CultureInfo.InvariantCulture),
-                        id = roll.roll.id,
                         payout = roll.roll.status.Equals("WON") ? roll.roll.payout : 0,
                         profit = (roll.roll.status.Equals("WON") ? roll.roll.payout : 0) - roll.roll.amount,
                         result = roll.roll.result,
+                        bet = roll.roll.bet,
+                        chance = roll.roll.chance,
+                        id = roll.roll.id
                     }
                 };
             }
@@ -84,11 +75,16 @@ namespace AutoDice.Sites
         }
         public override GenericBalance Tip(string payee, double amount)
         {
+            var tipParameters = new NameValueCollection
+            {
+                {"username", _username},
+                {"key", _apikey},
+                {"amount", ToServerString(amount, true)},
+                {"payee", payee}
+            };
             try
             {
-                var url = string.Format("https://dadice.com/api/tip?username={0}&key={1}&amount={2}&payee={3}",
-                    _username, _apikey, ToServerString(amount, true), payee);
-                var aux = JsonConvert.DeserializeObject<DaDiceTip>(client.DownloadString(url));
+                var aux = JsonConvert.DeserializeObject<DaDiceTip>(Encoding.UTF8.GetString(client.UploadValues("https://dadice.com/api/tip", tipParameters)));
                 return new GenericBalance { status = aux.status, error = aux.error, balance = Balance().balance };
             }
             catch
@@ -96,9 +92,13 @@ namespace AutoDice.Sites
                 return new GenericBalance { status = false, error = "Unable to connect" };
             }
         }
-        public override GenericCheck Seed(string seed)
+        public override GenericCheck Seed(bool ChangeSeed, string seed)
         {
             return new GenericCheck{status = false, error = "Not implemented"};
+        }
+        public override void Disconnect()
+        {
+            // ignored
         }
     }
 }

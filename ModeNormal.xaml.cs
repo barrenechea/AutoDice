@@ -75,7 +75,7 @@ namespace AutoDice
         {
             InitializeComponent();
             _CurrentSite = site;
-            Title = string.Format("AutoDice: {0}", username);
+            Title = $"AutoDice: {username}";
             _balance = balance;
             _username = username;
 
@@ -104,7 +104,8 @@ namespace AutoDice
         #region Window Loaded
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            lblVersion.Content = string.Format("Version {0} by @sbarrenechea", Assembly.GetExecutingAssembly().GetName().Version.ToString().Remove(5));
+            lblVersion.Content =
+                $"Version {Assembly.GetExecutingAssembly().GetName().Version.ToString().Remove(5)} by @sbarrenechea";
             BalanceUpdate(_balance);
             radLeveling.IsEnabled = _CurrentSite.CanLevel;
             chkOnlyJackpot.IsEnabled = _CurrentSite.CanJackpot;
@@ -127,7 +128,7 @@ namespace AutoDice
         {
             VerifyTip(balance);
             numBet.Maximum = Math.Truncate(balance * 100000000);
-            lblBalance.Content = string.Format("Balance: {0} BTC", balance.ToString("0.00000000").Replace(",", "."));
+            lblBalance.Content = $"Balance: {balance.ToString("0.00000000").Replace(",", ".")} BTC";
         }
         #endregion
         #region Method: CalcSatoshis(double number)
@@ -273,7 +274,8 @@ namespace AutoDice
         {
             if (numBet.Value != null && numWinningChance.Value != null)
             {
-                txtNextBetProfit.Text = string.Format("{0}", Math.Round(int.Parse(txtNextBetAmount.Text) * CalculatePayout((double)numWinningChance.Value)) - int.Parse(txtNextBetAmount.Text));
+                txtNextBetProfit.Text =
+                    $"{Math.Round(int.Parse(txtNextBetAmount.Text)*CalculatePayout((double) numWinningChance.Value)) - int.Parse(txtNextBetAmount.Text)}";
             }
         }
         #endregion
@@ -336,6 +338,7 @@ namespace AutoDice
             }
             else
             {
+                _CurrentSite.Disconnect();
                 e.Cancel = false;
             }
         }
@@ -353,6 +356,7 @@ namespace AutoDice
 
             if (result != MessageDialogResult.Affirmative) return;
             avoidClosing = false;
+            _CurrentSite.Disconnect();
             Close();
         }
         #endregion
@@ -368,7 +372,6 @@ namespace AutoDice
         #endregion
 
         #region Selection changes
-
         #region Style stuff
 
         #region Method: ChangeAppStyle()
@@ -584,7 +587,7 @@ namespace AutoDice
                 _baseAmount = CalcSatoshis((double)numBet.Value);
                 if (!_rollWorker.IsBusy)
                 {
-                    txtNextBetAmount.Text = string.Format("{0}", numBet.Value);
+                    txtNextBetAmount.Text = $"{numBet.Value}";
                 }
             }
             catch
@@ -610,7 +613,7 @@ namespace AutoDice
         {
             if (dataBets.SelectedIndex != -1)
             {
-                Clipboard.SetText(string.Format("!#{0}", ((GenericDataGrid)dataBets.SelectedItem).id));
+                Clipboard.SetText($"!#{((GenericDataGrid) dataBets.SelectedItem).id}");
             }
             else
             {
@@ -633,14 +636,14 @@ namespace AutoDice
             if (numWinningChance.Value != null)
             {
                 numWinningChance.Value = Math.Round((double)numWinningChance.Value, 2);
-                txtNextBetPayout.Text = string.Format("{0}x", CalculatePayout((double)numWinningChance.Value));
+                txtNextBetPayout.Text = $"{CalculatePayout((double) numWinningChance.Value)}x";
             }
             VerifyAndCalcProfit();
         }
         private void txtNextBetAmount_TextChanged(object sender, TextChangedEventArgs e)
         {
             VerifyAndCalcProfit();
-            txtNextBetLost.Text = string.Format("-{0}", txtNextBetAmount.Text);
+            txtNextBetLost.Text = $"-{txtNextBetAmount.Text}";
         }
         private void btnSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -750,7 +753,7 @@ namespace AutoDice
                     foreach (var dato in _datosRoll)
                     {
                         sw.WriteLine("[{0}] Amount: {1}, Payout: {2}. Result: {3}, Winning Chance: {4}. Bet: {5}. ID: {6}", dato.status, dato.amount, dato.payout, dato.result, dato.chance, dato.bet, dato.id);
-                        chatAppend.Add(string.Format("Bet Info: !#{0}", dato.id));
+                        chatAppend.Add($"Bet Info: !#{dato.id}");
                     }
                     sw.WriteLine("");
                     sw.WriteLine("ID's to be pasted on Chat:");
@@ -1071,7 +1074,7 @@ namespace AutoDice
         void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             var betsPerSecond = Math.Round((e.ProgressPercentage / (DateTime.Now - _initialDateTime).TotalSeconds), 2, MidpointRounding.AwayFromZero);
-            lblBetsPerSecond.Content = string.Format("{0} Bet{1}/s", betsPerSecond, betsPerSecond <= 1 ? string.Empty : "s");
+            lblBetsPerSecond.Content = $"{betsPerSecond} Bet{(betsPerSecond <= 1 ? string.Empty : "s")}/s";
 
             #region Status update
             if (_roll.status)
@@ -1085,7 +1088,7 @@ namespace AutoDice
                     radUnder.IsChecked = true;
                 }
                 CheckOverUnder();
-                txtNextBetAmount.Text = string.Format("{0}", Math.Round(_currentAmount * 100000000));
+                txtNextBetAmount.Text = $"{Math.Round(_currentAmount*100000000)}";
 
                 #region Add to DataGrid at Won
                 if ((bool)chkShowWon.IsChecked && _roll.data.status.Equals("WIN"))
@@ -1093,12 +1096,12 @@ namespace AutoDice
                     var data = new GenericDataGrid
                     {
                         status = _roll.data.status,
-                        amount = string.Format("-{0} Satoshi", Math.Round(_roll.data.amount * 100000000)),
-                        payout = string.Format("{0} Satoshi", Math.Round(_roll.data.payout * 100000000)),
-                        profit = string.Format("{0} Satoshi", Math.Round(_roll.data.profit * 100000000)),
+                        amount = $"-{Math.Round(_roll.data.amount*100000000)} Satoshi",
+                        payout = $"{Math.Round(_roll.data.payout*100000000)} Satoshi",
+                        profit = $"{Math.Round(_roll.data.profit*100000000)} Satoshi",
                         result = _roll.data.result,
                         bet = _roll.data.bet,
-                        chance = string.Format("{0}%", _roll.data.chance),
+                        chance = $"{_roll.data.chance}%",
                         id = _roll.data.id,
                         hour = DateTime.Now.ToString("HH:mm:ss", DateTimeFormatInfo.InvariantInfo)
                     };
@@ -1114,12 +1117,12 @@ namespace AutoDice
                     var data = new GenericDataGrid
                     {
                         status = _roll.data.status,
-                        amount = string.Format("-{0} Satoshi", Math.Round(_roll.data.amount * 100000000)),
-                        payout = string.Format("{0} Satoshi", Math.Round(_roll.data.payout * 100000000)),
-                        profit = string.Format("{0} Satoshi", Math.Round(_roll.data.profit * 100000000)),
+                        amount = $"-{Math.Round(_roll.data.amount*100000000)} Satoshi",
+                        payout = $"{Math.Round(_roll.data.payout*100000000)} Satoshi",
+                        profit = $"{Math.Round(_roll.data.profit*100000000)} Satoshi",
                         result = _roll.data.result,
                         bet = _roll.data.bet,
-                        chance = string.Format("{0}%", _roll.data.chance),
+                        chance = $"{_roll.data.chance}%",
                         id = _roll.data.id,
                         hour = DateTime.Now.ToString("HH:mm:ss", DateTimeFormatInfo.InvariantInfo)
                     };
@@ -1133,12 +1136,12 @@ namespace AutoDice
                     var data = new GenericDataGrid
                     {
                         status = _roll.data.status,
-                        amount = string.Format("-{0} Satoshi", Math.Round(_roll.data.amount * 100000000)),
-                        payout = string.Format("{0} Satoshi", Math.Round(_roll.data.payout * 100000000)),
-                        profit = string.Format("{0} Satoshi", Math.Round(_roll.data.profit * 100000000)),
+                        amount = $"-{Math.Round(_roll.data.amount*100000000)} Satoshi",
+                        payout = $"{Math.Round(_roll.data.payout*100000000)} Satoshi",
+                        profit = $"{Math.Round(_roll.data.profit*100000000)} Satoshi",
                         result = _roll.data.result,
                         bet = _roll.data.bet,
-                        chance = string.Format("{0}%", _roll.data.chance),
+                        chance = $"{_roll.data.chance}%",
                         id = _roll.data.id,
                         hour = DateTime.Now.ToString("HH:mm:ss", DateTimeFormatInfo.InvariantInfo)
                     };
@@ -1154,12 +1157,12 @@ namespace AutoDice
                     var data = new GenericDataGrid
                     {
                         status = _roll.data.status,
-                        amount = string.Format("-{0} Satoshi", Math.Round(_roll.data.amount * 100000000)),
+                        amount = $"-{Math.Round(_roll.data.amount*100000000)} Satoshi",
                         payout = "0 Satoshi",
-                        profit = string.Format("{0} Satoshi", Math.Round(_roll.data.profit * 100000000)),
+                        profit = $"{Math.Round(_roll.data.profit*100000000)} Satoshi",
                         result = _roll.data.result,
                         bet = _roll.data.bet,
-                        chance = string.Format("{0}%", _roll.data.chance),
+                        chance = $"{_roll.data.chance}%",
                         id = _roll.data.id,
                         hour = DateTime.Now.ToString("HH:mm:ss", DateTimeFormatInfo.InvariantInfo)
                     };
@@ -1182,14 +1185,12 @@ namespace AutoDice
                     if (_manuallyStopped)
                     {
                         if (_roll.data != null)
-                            lblStatus.Content = string.Format("Bet {0}: {1}. Bets stopped.", e.ProgressPercentage,
-                                _roll.data.status);
+                            lblStatus.Content = $"Bet {e.ProgressPercentage}: {_roll.data.status}. Bets stopped.";
                     }
                     else
                     {
                         if (_roll.data != null)
-                            lblStatus.Content = string.Format("Bet {0}: {1}", e.ProgressPercentage,
-                                _roll.data.status);
+                            lblStatus.Content = $"Bet {e.ProgressPercentage}: {_roll.data.status}";
                     }
                 }
                 else
@@ -1197,13 +1198,12 @@ namespace AutoDice
                     if (_manuallyStopped)
                     {
                         if (_roll.data != null)
-                            lblStatus.Content = string.Format("Last bet: {0}. Stopped.", _roll.data.status);
+                            lblStatus.Content = $"Last bet: {_roll.data.status}. Stopped.";
                     }
                     else
                     {
                         if (_roll.data != null)
-                            lblStatus.Content = string.Format("Bet {0}/{1}: {2}", e.ProgressPercentage, _cantidad,
-                                _roll.data.status);
+                            lblStatus.Content = $"Bet {e.ProgressPercentage}/{_cantidad}: {_roll.data.status}";
                     }
                 }
                 if (_roll.data != null && (_roll.data.status != null && _roll.data.status.Equals("WIN")))
@@ -1230,7 +1230,7 @@ namespace AutoDice
             }
             else
             {
-                lblStatus.Content = string.Format("Bet {0}: {1}. Retrying...", e.ProgressPercentage + 1, _roll.error);
+                lblStatus.Content = $"Bet {e.ProgressPercentage + 1}: {_roll.error}. Retrying...";
                 lblStatus.Foreground = Brushes.Orange;
 
             }
@@ -1248,7 +1248,7 @@ namespace AutoDice
             Topmost = false;
 
             MainControlUnlock();
-            txtNextBetAmount.Text = string.Format("{0}", numBet.Value);
+            txtNextBetAmount.Text = $"{numBet.Value}";
             _manuallyStopped = false;
 
             if (!(bool) chkShowResults.IsChecked) return;
@@ -1258,14 +1258,14 @@ namespace AutoDice
             if ((_finalBalance * 100000000) - (_initialBalance * 100000000) >= 0)
             {
                 lblResultsWonLose.Content = "You have won";
-                lblResultsAmount.Content = string.Format("{0} Satoshi",
-                    Math.Round((_finalBalance * 100000000) - (_initialBalance * 100000000)));
+                lblResultsAmount.Content =
+                    $"{Math.Round((_finalBalance*100000000) - (_initialBalance*100000000))} Satoshi";
             }
             else
             {
                 lblResultsWonLose.Content = "You have lost";
-                lblResultsAmount.Content = string.Format("{0} Satoshi",
-                    Math.Round((_finalBalance * 100000000) - (_initialBalance * 100000000)) * -1);
+                lblResultsAmount.Content =
+                    $"{Math.Round((_finalBalance*100000000) - (_initialBalance*100000000))*-1} Satoshi";
             }
             _winAmounts = 0;
             _loseAmounts = 0;

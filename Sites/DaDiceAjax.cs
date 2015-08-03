@@ -206,9 +206,20 @@ namespace AutoDice.Sites
                 return new GenericBalance { status = false, error = "Unable to connect" };
             }
         }
-        public override GenericCheck Seed(string seed)
+        public override GenericCheck Seed(bool ChangeSeed, string seed)
         {
             return new GenericCheck{status = false, error = "Not implemented"};
+        }
+        public override async void Disconnect()
+        {
+            try
+            {
+                await client.GetAsync("https://dadice.com/play?signout");
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

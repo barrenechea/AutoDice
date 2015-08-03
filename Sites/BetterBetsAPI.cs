@@ -1,19 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Specialized;
 using System.Globalization;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Net;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace AutoDice.Sites
 {
     public class BetterBetsAPI : DiceSite
     {
-        private HttpClient client;
+        private WebClient client;
         private string username, accessToken;
 
         public override GenericCheck Login(string _username, string _password, string _twofactor)
         {
-            CanTip = true;
+            CanTip = false;
             MinTipAmount = 0.00000001;
             TipAmountInterval = 0.00000001;
             CanLevel = false;
@@ -22,25 +22,15 @@ namespace AutoDice.Sites
 
             username = _username;
             accessToken = _password;
-            client = new HttpClient();
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("AutoDice Bot");
-            client.DefaultRequestHeaders.Add("x-requested-with", "XMLHttpRequest");
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-            client.DefaultRequestHeaders.AcceptLanguage.Add(StringWithQualityHeaderValue.Parse("en-US"));
-            client.DefaultRequestHeaders.AcceptLanguage.Add(StringWithQualityHeaderValue.Parse("en"));
-            client.DefaultRequestHeaders.AcceptEncoding.Add(StringWithQualityHeaderValue.Parse("gzip"));
-            client.DefaultRequestHeaders.AcceptEncoding.Add(StringWithQualityHeaderValue.Parse("deflate"));
-            client.DefaultRequestHeaders.AcceptEncoding.Add(StringWithQualityHeaderValue.Parse("sdch"));
-            client.DefaultRequestHeaders.Connection.Add("keep-alive");
-            
+            client = new WebClient();
+
             return new GenericCheck{status = true, username = _username};
         }
         public override GenericBalance Balance()
         {
             try
             {
-                var balance = JsonConvert.DeserializeObject<BetterBetsAPIBalance>(client.GetAsync(string.Format("https://betterbets.io/api/user/?accessToken={0}", accessToken)).Result.Content.ReadAsStringAsync().Result);
+                var balance = JsonConvert.DeserializeObject<BetterBetsAPIBalance>(client.DownloadString($"https://betterbets.io/api/user/?accessToken={accessToken}"));
 
                 if (balance.error != null) return new GenericBalance {status = false, error = balance.errorMsg};
                 
@@ -61,18 +51,16 @@ namespace AutoDice.Sites
         }
         public override GenericRoll Roll(double amount, double chance, bool overUnder)
         {
-            var contentBet = new FormUrlEncodedContent(new[]
-                {
-                    new KeyValuePair<string, string>("accessToken", accessToken),
-                    new KeyValuePair<string, string>("wager", ToServerString(amount, true)),
-                    new KeyValuePair<string, string>("chance", ToServerString(chance, false)),
-                    new KeyValuePair<string, string>("direction", overUnder ? "1" : "0")
-                });
+            var rollParameters = new NameValueCollection
+            {
+                {"accessToken", accessToken},
+                {"wager", ToServerString(amount, true)},
+                {"chance", ToServerString(chance, false)},
+                {"direction", (overUnder ? "1" : "0")}
+            };
             try
             {
-                var resultContent = client.PostAsync("https://betterbets.io/api/betDice/", contentBet).Result;
-                
-                var roll = JsonConvert.DeserializeObject<BetterBetsAPIRoll>(resultContent.Content.ReadAsStringAsync().Result);
+                var roll = JsonConvert.DeserializeObject<BetterBetsAPIRoll>(Encoding.UTF8.GetString(client.UploadValues("https://betterbets.io/api/betDice/", rollParameters)));
                 if (roll.error.Equals("0"))
                 {
                     return new GenericRoll
@@ -102,15 +90,15 @@ namespace AutoDice.Sites
         }
         public override GenericBalance Tip(string payee, double amount)
         {
-            var tipContent = new FormUrlEncodedContent(new[]
-                        {
-                            new KeyValuePair<string, string>("accessToken", accessToken),
-                            new KeyValuePair<string, string>("uname", payee),
-                            new KeyValuePair<string, string>("amount", ToServerString(amount, true))
-                        });
+            var tipParameters = new NameValueCollection
+            {
+                {"accessToken", accessToken},
+                {"uname", payee},
+                {"amount", ToServerString(amount, true)}
+            };
             try
             {
-                var tipData = JsonConvert.DeserializeObject<BetterBetsAPITip>(client.PostAsync("https://betterbets.io/api/tip/", tipContent).Result.Content.ReadAsStringAsync().Result);
+                var tipData = JsonConvert.DeserializeObject<BetterBetsAPITip>(Encoding.UTF8.GetString(client.UploadValues("https://betterbets.io/api/tip/", tipParameters)));
                 return tipData.success == 1 ? new GenericBalance { status = true, balance = double.Parse(tipData.balance, CultureInfo.InvariantCulture)} : new GenericBalance { status = false, error = tipData.errorMsg };
             }
             catch
@@ -118,9 +106,13 @@ namespace AutoDice.Sites
                 return new GenericBalance { status = false, error = "Unable to connect" };
             }
         }
-        public override GenericCheck Seed(string seed)
+        public override GenericCheck Seed(bool ChangeSeed, string seed)
         {
             return new GenericCheck{status = false, error = "Not implemented"};
+        }
+        public override void Disconnect()
+        {
+            // ignored
         }
     }
 }

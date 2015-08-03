@@ -15,7 +15,8 @@ namespace AutoDice.Sites
         public abstract GenericBalance Balance();
         public abstract GenericRoll Roll(double amount, double chance, bool overUnder);
         public abstract GenericBalance Tip(string payee, double amount);
-        public abstract GenericCheck Seed(string seed);
+        public abstract GenericCheck Seed(bool ChangeSeed, string seed);
+        public abstract void Disconnect();
 
         protected static string ToServerString(double value, bool mode)
         {
