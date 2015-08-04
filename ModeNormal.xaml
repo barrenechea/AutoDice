@@ -66,7 +66,8 @@
                               VerticalAlignment="Top" />
                     <ComboBox x:Name="cmbAccent" Margin="137,171,72,0" SelectionChanged="cmbAccent_SelectionChanged"
                               VerticalAlignment="Top" />
-                    <Controls:NumericUpDown x:Name="numDelay" Minimum="1" Maximum="5" Interval="0.01" Value="3"
+                    <CheckBox x:Name="chkDelay" ToolTip="Enable or disable bet delay" Margin="155,222,0,0" VerticalAlignment="Top" Checked="chkDelay_CheckedChanged" Unchecked="chkDelay_CheckedChanged"/>
+                    <Controls:NumericUpDown x:Name="numDelay" Minimum="0.01" Maximum="15" Interval="0.01"
                                             Margin="180,218,72,0" VerticalAlignment="Top" ValueChanged="numDelay_ValueChanged"/>
                     <CheckBox x:Name="chkShowResults" Content="Show Roll Results on stop" HorizontalAlignment="Left"
                               Margin="88,279,0,0" VerticalAlignment="Top" FontFamily="Segoe UI Semibold"

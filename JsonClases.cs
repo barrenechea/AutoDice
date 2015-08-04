@@ -189,6 +189,87 @@ namespace AutoDice
     #endregion
     #endregion
     #endregion
+    #region Primedice Classes
+    #region Login Class
+    public class PrimediceAPILogin
+    {
+        public object privilege { get; set; }
+        public string access_token { get; set; }
+    }
+
+    #endregion
+    #region Userdata Class
+    public class PrimeDiceAPIUserdata
+    {
+        public PrimeDiceAPIUserdataUser user { get; set; }
+        public PrimeDiceAPIUserDataMeta meta { get; set; }
+    }
+    public class PrimeDiceAPIUserdataUser
+    {
+        public long id { get; set; }
+        public string userid { get; set; }
+        public string username { get; set; }
+        public double balance { get; set; }
+        public bool password { get; set; }
+        public string address { get; set; }
+        public DateTime registered { get; set; }
+        public bool otp_enabled { get; set; }
+        public bool email_enabled { get; set; }
+        public bool address_enabled { get; set; }
+        public int wagered { get; set; }
+        public double profit { get; set; }
+        public int bets { get; set; }
+        public int wins { get; set; }
+        public int losses { get; set; }
+        public int win_risk { get; set; }
+        public int lose_risk { get; set; }
+        public int messages { get; set; }
+        public int referred { get; set; }
+        public int affiliate_total { get; set; }
+        public int nonce { get; set; }
+        public string client { get; set; }
+        public string previous_server { get; set; }
+        public string previous_client { get; set; }
+        public string previous_server_hashed { get; set; }
+        public string next_seed { get; set; }
+        public string server { get; set; }
+        public string otp_token { get; set; }
+        public string otp_qr { get; set; }
+    }
+    public class PrimeDiceAPIUserDataMeta
+    {
+        public bool blocked { get; set; }
+    }
+    #endregion
+    #region Roll Class
+    public class PrimeDiceAPIRoll
+    {
+        public PrimeDiceAPIRollBet bet { get; set; }
+        public PrimeDiceAPIUserdataUser user { get; set; }
+    }
+    public class PrimeDiceAPIRollBet
+    {
+        public long id { get; set; }
+        public string player { get; set; }
+        public string player_id { get; set; }
+        public double amount { get; set; }
+        public double target { get; set; }
+        public double profit { get; set; }
+        public bool win { get; set; }
+        public string condition { get; set; }
+        public double roll { get; set; }
+        public long nonce { get; set; }
+        public string client { get; set; }
+        public double multiplier { get; set; }
+        public DateTime timestamp { get; set; }
+        public bool jackpot { get; set; }
+        public string server { get; set; }
+        public bool revealed { get; set; }
+    }
+    #endregion
+    #endregion
+
+
     #region Generic Classes
     public class GenericCheck
     {

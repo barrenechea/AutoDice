@@ -90,6 +90,7 @@
     <Compile Include="Sites\DaDiceAjax.cs" />
     <Compile Include="Sites\DaDiceAPI.cs" />
     <Compile Include="Sites\DiceSite.cs" />
+    <Compile Include="Sites\PrimeDiceAPI.cs" />
     <Page Include="ModePro.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

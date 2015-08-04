@@ -157,8 +157,9 @@
                               VerticalAlignment="Top" />
                     <ComboBox x:Name="cmbAccent" Margin="137,71,72,0" SelectionChanged="cmbAccent_SelectionChanged"
                               VerticalAlignment="Top" />
-                    <Controls:NumericUpDown x:Name="NumDelay" Minimum="1" Maximum="5" Interval="0.01" Value="3"
-                                            Margin="180,118,72,0" VerticalAlignment="Top" ValueChanged="NumStartingChance_ValueChanged"/>
+                    <CheckBox x:Name="chkDelay" ToolTip="Enable or disable bet delay" Margin="155,122,0,0" VerticalAlignment="Top" Checked="chkDelay_CheckedChanged" Unchecked="chkDelay_CheckedChanged"/>
+                    <Controls:NumericUpDown x:Name="NumDelay" Minimum="0.01" Maximum="15" Interval="0.01"
+                                            Margin="180,118,72,0" VerticalAlignment="Top" ValueChanged="NumDelay_ValueChanged" />
                 </Grid>
             </Controls:Flyout>
             <Controls:Flyout x:Name="FlyoutCloudLoad" Position="Top" Height="425" Width="440" Theme="Inverse">
@@ -301,7 +302,7 @@
                                             </Grid>
                                         </GroupBox>
                                         <CheckBox x:Name="ChkFibonacciWhenLevel" Content="When level" HorizontalAlignment="Left" Margin="10,495,0,0" VerticalAlignment="Top" Checked="ChkFibonacciWhenLevel_CheckedChanged" Unchecked="ChkFibonacciWhenLevel_CheckedChanged"/>
-                                        <Controls:NumericUpDown x:Name="NumFibonacciWhenLevel" Value="10" Minimum="1" Maximum="50" Interval="1" Margin="97,491,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" ValueChanged="NumFibonacciWhenLevel_ValueChanged" />
+                                        <Controls:NumericUpDown x:Name="NumFibonacciWhenLevel" Value="10" Minimum="1" Interval="1" Margin="97,491,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="70" ValueChanged="NumFibonacciWhenLevel_ValueChanged" />
                                         <RadioButton x:Name="ChkFibonacciWhenLevelReset" Content="Reset" HorizontalAlignment="Left" Margin="246,495,0,0" VerticalAlignment="Top" IsChecked="True" GroupName="GroupFibonacciAux" Checked="ChkFibonacciWhenLevelOption_CheckedChanged"/>
                                         <RadioButton x:Name="ChkFibonacciWhenLevelStop" Content="Stop" HorizontalAlignment="Left" Margin="313,495,0,0" VerticalAlignment="Top" GroupName="GroupFibonacciAux" Checked="ChkFibonacciWhenLevelOption_CheckedChanged"/>
                                         <Label Content="is reached: " HorizontalAlignment="Left" Margin="172,491,0,0" VerticalAlignment="Top"/>
@@ -414,6 +415,13 @@
         </Grid>
         <Grid Grid.Row="0" Grid.Column="2" Margin="20,0,10,10">
             <Label Content="Statistics" Foreground="{DynamicResource AccentColorBrush}" FontSize="26" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Button x:Name="BtnRefreshBalance" ToolTip="Refresh Balance" Style="{DynamicResource MetroCircleButtonStyle}" HorizontalAlignment="Left" Margin="150,0,0,184" VerticalAlignment="Bottom" Width="30" Height="30" Click="BtnRefreshBalance_Click">
+                <Rectangle HorizontalAlignment="Left" Width="10" Height="12" VerticalAlignment="Bottom" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                    <Rectangle.OpacityMask>
+                        <VisualBrush Visual="{StaticResource appbar_refresh}" Stretch="Fill" />
+                    </Rectangle.OpacityMask>
+                </Rectangle>
+            </Button>
             <Button ToolTip="Clear Statistics" Style="{DynamicResource MetroCircleButtonStyle}" HorizontalAlignment="Left" Margin="180,0,0,184" VerticalAlignment="Bottom" Width="30" Height="30" Click="BtnClearStatistics_Click">
                 <Rectangle HorizontalAlignment="Left" Width="10" Height="10" VerticalAlignment="Bottom" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
                     <Rectangle.OpacityMask>
@@ -422,23 +430,26 @@
                 </Rectangle>
             </Button>
             <Label Content="Balance:" HorizontalAlignment="Left" Margin="10,50,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Profit: " HorizontalAlignment="Left" Margin="10,71,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Biggest win:" HorizontalAlignment="Left" Margin="10,92,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Biggest loss:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Biggest bet:" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Win/Loss:" HorizontalAlignment="Left" Margin="10,155,0,0" VerticalAlignment="Top" Width="78"/>
-            <Label Content="Biggest winning streak: " HorizontalAlignment="Left" Margin="10,176,0,0" VerticalAlignment="Top"/>
-            <Label Content="Biggest losing streak: " HorizontalAlignment="Left" Margin="10,197,0,0" VerticalAlignment="Top"/>
+            <Label Content="Wagered:" HorizontalAlignment="Left" Margin="10,71,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Profit:" HorizontalAlignment="Left" Margin="10,92,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest win:" HorizontalAlignment="Left" Margin="10,113,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest loss:" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Biggest bet:" HorizontalAlignment="Left" Margin="10,155,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Win/Loss: " HorizontalAlignment="Left" Margin="10,176,0,0" VerticalAlignment="Top" Width="78"/>
+            <Label Content="Win/Loss streak: " HorizontalAlignment="Left" Margin="10,197,0,-4" VerticalAlignment="Top"/>
             <Label x:Name="LblBalance" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,50,0,0" VerticalAlignment="Top" Width="105"/>
-            <Label x:Name="LblProfit" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,71,0,0" VerticalAlignment="Top" Width="105"/>
-            <Label x:Name="LblBiggestWon" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,92,0,0" VerticalAlignment="Top" Width="105"/>
-            <Label x:Name="LblBiggestLost" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,113,0,0" VerticalAlignment="Top" Width="105"/>
-            <Label x:Name="LblBiggestBet" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,134,0,0" VerticalAlignment="Top" Width="105"/>
-            <Label x:Name="LblWonCounter" Content="0" Foreground="Green" HorizontalAlignment="Left" Margin="98,155,0,0" VerticalAlignment="Top" Width="58" HorizontalContentAlignment="Right"/>
-            <Label Content="/" HorizontalAlignment="Left" Margin="152,155,0,0" VerticalAlignment="Top"/>
-            <Label x:Name="LblLostCounter" Content="0" Foreground="Red" HorizontalAlignment="Left" Margin="162,155,0,0" VerticalAlignment="Top" Width="58"/>
-            <Label x:Name="LblWinningStreakCounter" Content="0" HorizontalAlignment="Left" Margin="140,176,0,0" VerticalAlignment="Top" Width="80"/>
-            <Label x:Name="LblLosingStreakCounter" Content="0" HorizontalAlignment="Left" Margin="140,197,0,0" VerticalAlignment="Top" Width="80"/>
+            <Label x:Name="LblWagered" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,71,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblProfit" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,92,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestWon" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,113,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestLost" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,134,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblBiggestBet" Content="0.00000000 BTC" HorizontalAlignment="Left" Margin="115,155,0,0" VerticalAlignment="Top" Width="105"/>
+            <Label x:Name="LblWonCounter" Content="0" Foreground="Green" HorizontalAlignment="Left" Margin="98,176,0,0" VerticalAlignment="Top" Width="58" HorizontalContentAlignment="Right"/>
+            <Label Content="/" HorizontalAlignment="Left" Margin="152,176,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="LblLostCounter" Content="0" Foreground="Red" HorizontalAlignment="Left" Margin="162,176,0,0" VerticalAlignment="Top" Width="58"/>
+            <Label x:Name="LblWinningStreakCounter" Content="0" Foreground="Green" HorizontalAlignment="Left" Margin="109,197,0,0" VerticalAlignment="Top" Width="47" HorizontalContentAlignment="Right"/>
+            <Label Content="/" HorizontalAlignment="Left" Margin="152,197,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="LblLosingStreakCounter" Content="0" Foreground="Red"  HorizontalAlignment="Left" Margin="162,197,0,0" VerticalAlignment="Top" Width="58"/>
+            
         </Grid>
         <GridSplitter Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" Width="10"/>
 

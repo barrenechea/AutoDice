@@ -121,7 +121,19 @@ namespace AutoDice
             {
                 if (File.Exists("config.ini"))
                 {
+                    using (var reader = new StreamReader("config.ini"))
+                    {
+                        if (!reader.ReadToEnd().Contains("DELAYENABLED"))
+                        {
+                            reader.Close();
+                            var parserFix = new IniParser("config.ini");
+                            parserFix.AddSetting("AUTODICE", "DELAYENABLED", "False");
+                            parserFix.AddSetting("AUTODICE", "DELAYTIME", "10");
+                            parserFix.SaveSettings();
+                        }
+                    }
                     var parserStart = new IniParser("config.ini");
+                    
                     chkLogin.IsChecked = bool.Parse(parserStart.GetSetting("AUTODICE", "SAVELOGINDATA"));
                     if ((bool) chkLogin.IsChecked)
                     {
@@ -144,6 +156,8 @@ namespace AutoDice
                         writer.WriteLine("WINDOWTHEME=0");
                         writer.WriteLine("WINDOWCOLOR=1");
                         writer.WriteLine("WEBSITE=0");
+                        writer.WriteLine("DELAYENABLED=False");
+                        writer.WriteLine("DELAYTIME=10");
                     }
                     cmbSite.SelectedIndex = 0;
                     continue;
@@ -297,6 +311,13 @@ namespace AutoDice
                     userlabel = "Username",
                     passlabel = "API Key",
                     site = new DaDiceAPI()
+                },
+                new SiteList
+                {
+                    name = "PrimeDice - API Mode",
+                    userlabel = "Username",
+                    passlabel = "Password",
+                    site = new PrimeDiceAPI()
                 }
             };
 

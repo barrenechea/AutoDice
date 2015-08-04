@@ -8,9 +8,8 @@ namespace AutoDice.Sites
 {
     public class BetterBetsAPI : DiceSite
     {
-        private WebClient client;
+        private readonly WebClient client = new WebClient();
         private string username, accessToken;
-
         public override GenericCheck Login(string _username, string _password, string _twofactor)
         {
             CanTip = false;
@@ -22,7 +21,6 @@ namespace AutoDice.Sites
 
             username = _username;
             accessToken = _password;
-            client = new WebClient();
 
             return new GenericCheck{status = true, username = _username};
         }

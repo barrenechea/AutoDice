@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -67,7 +68,7 @@ namespace AutoDice
 
         // Variables for measuring the speed of bets
         private DateTime _initialDateTime;
-        private double _delay = 3;
+        private double _delay;
 
         // Variables for Tipping
         private string _Payee;
@@ -90,15 +91,16 @@ namespace AutoDice
         private readonly BackgroundWorker _rollWorker = new BackgroundWorker();
 
         readonly BackgroundWorker _tipWorker = new BackgroundWorker();
+        readonly BackgroundWorker _balanceWorker = new BackgroundWorker();
         private GenericBalance _tipData;
         readonly IniParser _parser = new IniParser("config.ini");
         private bool _HasCleanedGraph;
         private ProgressDialogController _controller;
 
         private int _WonsCounter, _LostCounter;
-        private double _BiggestWon, _BiggestLost, _BiggestBet;
+        private double _BiggestWon, _BiggestLost, _BiggestBet, _Wagered;
 
-        private double _balance, _initialBalance;
+        private double _balance;
         private bool _martingale, _manuallyStopped;
 
         private bool _DoOneRoll, _StopOnWon, _AutoScroll, _ShowWons, _ShowLosses;
@@ -109,7 +111,7 @@ namespace AutoDice
         // Variables for Current roll data
         private GenericRoll _roll;
 
-        private double _TotalProfit, _CurrentProfit;
+        private double _TotalProfit, _CurrentProfit, _AuxProfit;
 
         #endregion
 
@@ -141,15 +143,16 @@ namespace AutoDice
         private void RollWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             _CurrentProfit = 0;
+            _AuxProfit = 0;
             _CurrentBet = _NumStartingBet;
             _CurrentChance = _NumStartingChange;
             _CurrentMultiplier = _NumMultiplierLoss;
-            _initialBalance = _balance;
             _manuallyStopped = false;
             _WinStreak = 0;
             _LossStreak = 0;
             var counter = 0;
             _initialDateTime = DateTime.Now;
+            var timelapse = new Stopwatch();
             while (!_manuallyStopped)
             {
                 if ((sender as BackgroundWorker).CancellationPending)
@@ -157,15 +160,17 @@ namespace AutoDice
                     e.Cancel = true;
                     break;
                 }
-                //var timelapse = Stopwatch.StartNew();
+                if (DelayEnabled) timelapse.Start();
                 _roll = RequestBet();
                 if (_roll.status)
                 {
                     _CloudTotalBets++;
+                    _Wagered += _roll.data.amount;
                     _CloudProfit += _roll.data.profit;
 
                     _TotalProfit += _roll.data.profit;
                     _CurrentProfit += _roll.data.profit;
+                    _AuxProfit += _roll.data.profit;
                     if (_DoOneRoll)
                     {
                         _manuallyStopped = true;
@@ -232,14 +237,14 @@ namespace AutoDice
                     _CloudLossStreak = _LossStreak;
                     CheckStopConditions();
                 }
-
-                //timelapse.Stop();
-
-                //if (timelapse.ElapsedMilliseconds < (1000 / _delay))
-                //{
-                //    Thread.Sleep((int)(1000 / _delay) - (int)(timelapse.ElapsedMilliseconds));
-                //}
-
+                if (timelapse.IsRunning)
+                {
+                    if (timelapse.ElapsedMilliseconds < (1000 / _delay))
+                    {
+                        Thread.Sleep((int)(1000 / _delay) - (int)(timelapse.ElapsedMilliseconds));
+                    }
+                    timelapse.Reset();
+                }
                 (sender as BackgroundWorker).ReportProgress(counter);
             }
         }
@@ -291,7 +296,7 @@ namespace AutoDice
                 LblStatus.Content = $"Bet {e.ProgressPercentage}: {_roll.data.status}";
                 LblStatus.Foreground = _roll.data.status.Equals("WIN") ? Brushes.Green : Brushes.Red;
             }
-            else
+            else if (!_roll.error.Equals("Betting too fast. Slow down a bit?"))
             {
                 LblStatus.Content = $"Bet {e.ProgressPercentage + 1}: {_roll.error} [Retrying]";
                 LblStatus.Foreground = Brushes.Orange;
@@ -314,7 +319,7 @@ namespace AutoDice
                 }
 
                 lblAverageProfit.Content =
-                    $"Average Profit: {((_CurrentProfit/e.ProgressPercentage)*betsPerSecond*600).ToString("0.00000000")} / 10 minutes";
+                    $"Average Profit: {((_CurrentProfit / e.ProgressPercentage) * betsPerSecond * 600).ToString("0.00000000")} / 10 minutes";
             }
             else if (!_HasCleanedGraph)
             {
@@ -329,6 +334,7 @@ namespace AutoDice
         private void RollWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
+            BtnRefreshBalance.IsEnabled = true;
             btnNormalMode.IsEnabled = true;
             BtnStartStrategie.IsEnabled = true;
             BtnStartOneRoll.IsEnabled = true;
@@ -356,6 +362,7 @@ namespace AutoDice
         #region Buttons Functionallities
         private void BtnStartOneRoll_Click(object sender, RoutedEventArgs e)
         {
+            BtnRefreshBalance.IsEnabled = false;
             _NumStartingBet = (double)NumStartingBet.Value;
             _NumStartingChange = (double)NumStartingChance.Value;
             _NumMultiplierLoss = (double)NumMultiplierLoss.Value;
@@ -371,6 +378,7 @@ namespace AutoDice
         }
         private void BtnStartStrategie_Click(object sender, RoutedEventArgs e)
         {
+            BtnRefreshBalance.IsEnabled = false;
             _NumStartingBet = (double)NumStartingBet.Value;
             _NumStartingChange = (double)NumStartingChance.Value;
             _NumMultiplierLoss = (double)NumMultiplierLoss.Value;
@@ -411,7 +419,6 @@ namespace AutoDice
 
         #endregion
         #region Martingale
-
         #region Martingale Logic
         private void Martingale(bool Won)
         {
@@ -442,7 +449,7 @@ namespace AutoDice
                     _CurrentMultiplier = _NumMultiplierWon;
                 }
                 _CurrentBet *= _CurrentMultiplier;
-                if (_CurrentBet < 0.00000000)
+                if (_CurrentBet <= 0.00000000)
                 {
                     _CurrentBet = 0.00000001;
                 }
@@ -495,7 +502,7 @@ namespace AutoDice
                 {
                     _CurrentMultiplier = _NumMultiplierLoss;
                 }
-                if (_CurrentBet < 0.00000000)
+                if (_CurrentBet <= 0.00000000)
                 {
                     _CurrentBet = 0.00000001;
                 }
@@ -520,7 +527,6 @@ namespace AutoDice
         }
 
         #endregion
-
         #region Martingale Check Current Settings
         private void CheckMartingale()
         {
@@ -551,20 +557,23 @@ namespace AutoDice
 
         #endregion
         #region Fibonacci
-
         #region Method to Populate Fibonacci
+        private readonly List<double> FibonacciList = new List<double>();
         private void PopulateFibonacci(double number)
         {
             double Previous = 0;
             var Current = number;
             lstFibonacci.Items.Clear();
+            FibonacciList.Clear();
             for (var i = 1; i <= 50; i++)
             {
+                FibonacciList.Add(Current);
                 lstFibonacci.Items.Add($"{i}. {ToServerString(Current, true)}");
                 var tmp = Current;
                 Current += Previous;
                 Previous = tmp;
             }
+            NumFibonacciWhenLevel.Maximum = FibonacciList.Count;
         }
 
         #endregion
@@ -573,6 +582,8 @@ namespace AutoDice
         {
             if (Won)
             {
+                _LossStreak = 0;
+                _WinStreak ++;
                 if (_ChkFibonacciWonIncrease)
                 {
                     FibonacciLevel += _NumFibonacciIncrementWon;
@@ -589,6 +600,8 @@ namespace AutoDice
             }
             else
             {
+                _WinStreak = 0;
+                _LossStreak++;
                 if (_ChkFibonacciLossIncrease)
                 {
                     FibonacciLevel += _NumFibonacciIncrementLoss;
@@ -621,11 +634,9 @@ namespace AutoDice
                     _manuallyStopped = true;
                 }
             }
-            _CurrentBet = double.Parse(lstFibonacci.Items[FibonacciLevel].ToString().Substring(lstFibonacci.Items[FibonacciLevel].ToString().IndexOf(" ", StringComparison.Ordinal) + 1).Replace(",", "."), CultureInfo.InvariantCulture);
+            _CurrentBet = FibonacciList[FibonacciLevel];
         }
-
         #endregion
-
         #endregion
         #region Simulation
         private void Simulate()
@@ -667,10 +678,9 @@ namespace AutoDice
             {
                 _manuallyStopped = true;
             }
-
             #endregion
             #region On Losses Conditions
-            if (_ChkStopAfterBTCLoss && _initialBalance - _balance <= _NumStopBTCLoss)
+            if (_ChkStopAfterBTCLoss && ((-_AuxProfit) >= _NumStopBTCLoss))
             {
                 _manuallyStopped = true;
             }
@@ -678,20 +688,23 @@ namespace AutoDice
             {
                 _manuallyStopped = true;
             }
-            if (_ChkResetAfterBTCLoss && _initialBalance - _balance <= _NumResetBTCLoss)
+            if (_ChkResetAfterBTCLoss && ((-_AuxProfit) >= _NumResetBTCLoss))
             {
                 _CurrentBet = _NumStartingBet;
                 _CurrentMultiplier = _NumMultiplierWon;
-
+                FibonacciLevel = 0;
+                _AuxProfit = 0;
             }
             if (_ChkResetAfterLossesInRow && _LossStreak >= _NumResetLosesInRow)
             {
                 _CurrentBet = _NumStartingBet;
                 _CurrentMultiplier = _NumMultiplierWon;
+                FibonacciLevel = 0;
+                _LossStreak = 0;
             }
             #endregion
             #region On Wons Conditions
-            if (_ChkStopAfterBTCProfit && _balance - _initialBalance >= _NumStopBTCProfit)
+            if (_ChkStopAfterBTCProfit && (_AuxProfit >= _NumStopBTCProfit))
             {
                 _manuallyStopped = true;
             }
@@ -699,17 +712,18 @@ namespace AutoDice
             {
                 _manuallyStopped = true;
             }
-            if (_ChkResetAfterBTCProfit && _balance - _initialBalance >= _NumResetBTCProfit)
+            if (_ChkResetAfterBTCProfit && (_AuxProfit >= _NumResetBTCProfit))
             {
                 _CurrentBet = _NumStartingBet;
                 _CurrentMultiplier = _NumMultiplierWon;
+                _AuxProfit = 0;
             }
             if (_ChkResetAfterWonsInRow && _WinStreak >= _NumResetWonsInRow)
             {
                 _CurrentBet = _NumStartingBet;
                 _CurrentMultiplier = _NumMultiplierWon;
+                _WinStreak = 0;
             }
-
             #endregion
         }
 
@@ -758,6 +772,9 @@ namespace AutoDice
 
             _tipWorker.DoWork += tipWorker_DoWork;
             _tipWorker.RunWorkerCompleted += tipWorker_RunWorkerCompleted;
+
+            _balanceWorker.DoWork += balanceWorker_DoWork;
+            _balanceWorker.RunWorkerCompleted += balanceWorker_RunWorkerCompleted;
 
             _cloudWorker.DoWork += cloudWorker_DoWork;
             _cloudWorker.RunWorkerCompleted += cloudWorker_RunWorkerCompleted;
@@ -812,7 +829,43 @@ namespace AutoDice
         }
 
         #endregion
+        #endregion
+        #region BalanceWorker Methods
+        #region Event of clicking Refresh button
+        private void BtnRefreshBalance_Click(object sender, RoutedEventArgs e)
+        {
+            BtnRefreshBalance.IsEnabled = false;
+            _balanceWorker.RunWorkerAsync();
+        }
+        #endregion
+        #region DoWork
 
+        private GenericBalance _balanceAux;
+        private void balanceWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            _balanceAux = _currentSite.Balance();
+        }
+
+        #endregion
+        #region RunWorkerCompleted
+        private void balanceWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            BtnRefreshBalance.IsEnabled = true;
+            if (_balanceAux.status)
+            {
+                _balance = _balanceAux.balance;
+                UpdateLabels();
+                LblStatus.Content = "Balance updated successfully";
+                LblStatus.Foreground = Brushes.Green;
+            }
+            else
+            {
+                LblStatus.Content = "Unable to fetch balance";
+                LblStatus.Foreground = Brushes.Red;
+            }
+        }
+
+        #endregion
         #endregion
         #region Method to format the data sent to Da Dice
         private static string ToServerString(double value, bool mode)
@@ -825,7 +878,6 @@ namespace AutoDice
         {
             return _currentSite.Roll(_CurrentBet, _CurrentChance, _RollOverUnder.Equals("over"));
         }
-
         #endregion
         #region Window Loaded Method
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
@@ -839,6 +891,8 @@ namespace AutoDice
             {
                 LoadStratConfig("default.ini");
             }
+            chkDelay.IsChecked = DelayEnabled = bool.Parse(_parser.GetSetting("AUTODICE", "DELAYENABLED"));
+            NumDelay.Value = _delay = double.Parse(_parser.GetSetting("AUTODICE", "DELAYTIME"), CultureInfo.InvariantCulture);
             NumStartingChance.Maximum = _currentSite.MaxMultiplier;
             NumStartingChance.Minimum = _currentSite.MinMultiplier;
             btnTip.IsEnabled = _currentSite.CanTip;
@@ -865,6 +919,35 @@ namespace AutoDice
         #endregion
         #region Values changed
         #region Initial Settings
+        private void NumDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
+        {
+            try
+            {
+                _delay = (double)NumDelay.Value;
+                _parser.AddSetting("AUTODICE", "DELAYTIME", ((double)NumDelay.Value).ToString("0.00", CultureInfo.InvariantCulture));
+                _parser.SaveSettings();
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        private bool DelayEnabled;
+
+        private void chkDelay_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DelayEnabled = (bool)chkDelay.IsChecked;
+                _parser.AddSetting("AUTODICE", "DELAYENABLED", chkDelay.IsChecked.ToString());
+                _parser.SaveSettings();
+            }
+            catch
+            {
+                // ignored
+            }
+        }
         private void NumStartingBet_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
             try
@@ -892,7 +975,6 @@ namespace AutoDice
                 _NumStartingChange = (double)NumStartingChance.Value;
                 _CurrentChance = _NumStartingChange;
                 txtNextBetPayout.Text = $"{CalculatePayout(_NumStartingChange)}x";
-                _delay = (double)NumDelay.Value;
                 RadRollOver.Content = $"Over {(99.99 - _NumStartingChange).ToString("0.00").Replace(",", ".")}";
                 RadRollUnder.Content = $"Under {_NumStartingChange.ToString("0.00").Replace(",", ".")}";
             }
@@ -1360,6 +1442,7 @@ namespace AutoDice
         {
             VerifyTip();
             LblBalance.Content = _balance.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
+            LblWagered.Content = _Wagered.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
             LblProfit.Content = _TotalProfit.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
             LblBiggestWon.Content = _BiggestWon.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
             LblBiggestLost.Content = _BiggestLost.ToString("0.00000000 BTC", CultureInfo.InvariantCulture);
@@ -1614,6 +1697,7 @@ namespace AutoDice
             _WonsCounter = 0;
             _LostCounter = 0;
             _TotalProfit = 0;
+            _Wagered = 0;
             UpdateLabels();
         }
         private void BtnClearGrid_Click(object sender, RoutedEventArgs e)
@@ -1943,7 +2027,7 @@ namespace AutoDice
             }
             FlyoutCloudLoad.IsOpen = false;
             _controller = await this.ShowProgressAsync("Please wait",
-                $"Loading {Base64Decode(((Strategy) cmbCloudStrategies.SelectedItem).name)}...");
+                $"Loading {Base64Decode(((Strategy)cmbCloudStrategies.SelectedItem).name)}...");
             CloudLoadMode = 2;
             _cloudWorker.RunWorkerAsync();
         }

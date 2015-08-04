@@ -18,7 +18,7 @@ using Microsoft.Win32;
 namespace AutoDice
 {
     /// <summary>
-    /// Lógica de interacción para DaDiceMain.xaml
+    /// Lógica de interacción para ModeNormal.xaml
     /// </summary>
     public partial class ModeNormal
     {
@@ -45,7 +45,7 @@ namespace AutoDice
         private GenericBalance _getBalance;
 
         double _initialBalance, _finalBalance, _balance;
-        double _baseAmount, _currentAmount, _chance, _delay = 3;
+        double _baseAmount, _currentAmount, _chance, _delay;
 
         int _amountIncWin, _amountIncLose;
         int _won, _lose, _jp, _contador;
@@ -111,6 +111,8 @@ namespace AutoDice
             chkOnlyJackpot.IsEnabled = _CurrentSite.CanJackpot;
             numWinningChance.Maximum = _CurrentSite.MaxMultiplier;
             numWinningChance.Minimum = _CurrentSite.MinMultiplier;
+            chkDelay.IsChecked = DelayEnabled = bool.Parse(_parser.GetSetting("AUTODICE", "DELAYENABLED"));
+            numDelay.Value = _delay = double.Parse(_parser.GetSetting("AUTODICE", "DELAYTIME"), CultureInfo.InvariantCulture);
             TabTip.IsEnabled = _CurrentSite.CanTip;
             numAmountTip.Minimum = _CurrentSite.MinTipAmount;
             numAmountTip.Interval = _CurrentSite.TipAmountInterval;
@@ -625,12 +627,30 @@ namespace AutoDice
             try
             {
                 _delay = (double)numDelay.Value;
+                _parser.AddSetting("AUTODICE", "DELAYTIME", ((double)numDelay.Value).ToString("0.00", CultureInfo.InvariantCulture));
+                _parser.SaveSettings();
             }
             catch
             {
                 // ignored
             }
         }
+
+        private bool DelayEnabled;
+        private void chkDelay_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                DelayEnabled = (bool) chkDelay.IsChecked;
+                _parser.AddSetting("AUTODICE", "DELAYENABLED", chkDelay.IsChecked.ToString());
+                _parser.SaveSettings();
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
         private void numWinningChance_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
         {
             if (numWinningChance.Value != null)
@@ -852,6 +872,7 @@ namespace AutoDice
         {
             _initialDateTime = DateTime.Now;
             _manuallyStopped = false;
+            var timelapse = new Stopwatch();
 
             #region Infinite bets
             if (_cantidad == 0)
@@ -863,7 +884,7 @@ namespace AutoDice
                         e.Cancel = true;
                         break;
                     }
-                    var timelapse = Stopwatch.StartNew();
+                    if (DelayEnabled) timelapse.Start();
                     _roll = _CurrentSite.Roll(_currentAmount, _chance, _bet.Equals("over"));
 
                     if (_roll.status)
@@ -949,11 +970,13 @@ namespace AutoDice
                             }
                         }
                     }
-                    timelapse.Stop();
-
-                    if (timelapse.ElapsedMilliseconds < (1000 / _delay))
+                    if (timelapse.IsRunning)
                     {
-                        Thread.Sleep((int)(1000 / _delay) - (int)(timelapse.ElapsedMilliseconds));
+                        if (timelapse.ElapsedMilliseconds < (1000/_delay))
+                        {
+                            Thread.Sleep((int) (1000/_delay) - (int) (timelapse.ElapsedMilliseconds));
+                        }
+                        timelapse.Reset();
                     }
 
                     (sender as BackgroundWorker).ReportProgress(_contador);
@@ -970,7 +993,7 @@ namespace AutoDice
                         e.Cancel = true;
                         break;
                     }
-                    var timelapse = Stopwatch.StartNew();
+                    if (DelayEnabled) timelapse.Start();
                     _roll = _CurrentSite.Roll(_currentAmount, _chance, _bet.Equals("over"));
                     if (_roll.status)
                     {
@@ -1055,11 +1078,13 @@ namespace AutoDice
                     {
                         i -= 1;
                     }
-                    timelapse.Stop();
-
-                    if (timelapse.ElapsedMilliseconds < (1000 / _delay))
+                    if (timelapse.IsRunning)
                     {
-                        Thread.Sleep((int)(1000 / _delay) - (int)(timelapse.ElapsedMilliseconds));
+                        if (timelapse.ElapsedMilliseconds < (1000/_delay))
+                        {
+                            Thread.Sleep((int) (1000/_delay) - (int) (timelapse.ElapsedMilliseconds));
+                        }
+                        timelapse.Reset();
                     }
 
                     (sender as BackgroundWorker).ReportProgress(i);
@@ -1228,11 +1253,10 @@ namespace AutoDice
                     lblStatus.Foreground = Brushes.Orange;
                 }
             }
-            else
+            else if (!_roll.error.Equals("Betting too fast. Slow down a bit?"))
             {
                 lblStatus.Content = $"Bet {e.ProgressPercentage + 1}: {_roll.error}. Retrying...";
                 lblStatus.Foreground = Brushes.Orange;
-
             }
             #endregion
 
