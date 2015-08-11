@@ -449,7 +449,7 @@ namespace AutoDice
                     _CurrentMultiplier = _NumMultiplierWon;
                 }
                 _CurrentBet *= _CurrentMultiplier;
-                if (_CurrentBet <= 0.00000000)
+                if (_CurrentBet < 0.00000001)
                 {
                     _CurrentBet = 0.00000001;
                 }
@@ -502,7 +502,7 @@ namespace AutoDice
                 {
                     _CurrentMultiplier = _NumMultiplierLoss;
                 }
-                if (_CurrentBet <= 0.00000000)
+                if (_CurrentBet < 0.00000001)
                 {
                     _CurrentBet = 0.00000001;
                 }
