@@ -64,6 +64,10 @@
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="SharpLua, Version=2.0.4696.34005, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpLua.2.1.1.1\lib\net40\SharpLua.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Sparrow.Chart.Wpf.40, Version=13.1.0.118, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Sparrow.Chart.Wpf.13.1.0.118\lib\net40\Sparrow.Chart.Wpf.40.dll</HintPath>
@@ -86,11 +90,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Programmer.xaml.cs">
+      <DependentUpon>Programmer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Sites\BetterBetsAPI.cs" />
     <Compile Include="Sites\DaDiceAjax.cs" />
     <Compile Include="Sites\DaDiceAPI.cs" />
     <Compile Include="Sites\DiceSite.cs" />
     <Compile Include="Sites\PrimeDiceAPI.cs" />
+    <Page Include="Programmer.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="ModePro.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
