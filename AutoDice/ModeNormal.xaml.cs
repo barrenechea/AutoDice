@@ -11,7 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shell;
 using AutoDice.Sites;
-using MahApps.Metro;
+using ControlzEx.Theming;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
 
@@ -385,8 +385,8 @@ namespace AutoDice
             var a = int.Parse(_parser.GetSetting("AUTODICE", "WINDOWTHEME"));
             var b = int.Parse(_parser.GetSetting("AUTODICE", "WINDOWCOLOR"));
             string theme, accent;
-            if (a == 0) { theme = "BaseLight"; logoBlack.Visibility = Visibility.Hidden; logoWhite.Visibility = Visibility.Visible; }
-            else { theme = "BaseDark"; logoWhite.Visibility = Visibility.Hidden; logoBlack.Visibility = Visibility.Visible; }
+            if (a == 0) { theme = "Light"; logoBlack.Visibility = Visibility.Hidden; logoWhite.Visibility = Visibility.Visible; }
+            else { theme = "Dark"; logoWhite.Visibility = Visibility.Hidden; logoBlack.Visibility = Visibility.Visible; }
             switch (b)
             {
                 case 0:
@@ -463,9 +463,7 @@ namespace AutoDice
                     break;
             }
 
-            ThemeManager.ChangeAppStyle(Application.Current,
-                                        ThemeManager.GetAccent(accent),
-                                        ThemeManager.GetAppTheme(theme));
+            ThemeManager.Current.ChangeTheme(Application.Current, $"{theme}.{accent}");
         }
         #endregion
         private void cmbTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

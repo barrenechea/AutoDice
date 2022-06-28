@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Windows;
-using MahApps.Metro;
+using ControlzEx.Theming;
 using MahApps.Metro.Controls.Dialogs;
 using Newtonsoft.Json;
 
@@ -125,17 +125,15 @@ namespace DaDice
         private void ChangeAppStyle(int a, int b)
         {
             string theme, accent;
-            if (a == 0) { theme = "BaseLight"; }
-            else { theme = "BaseDark"; }
+            if (a == 0) { theme = "Light"; }
+            else { theme = "Dark"; }
             if (b == 0) { accent = "Blue"; }
             else if (b == 1) { accent = "Red"; }
             else if (b == 2) { accent = "Green"; }
             else if (b == 3) { accent = "Purple"; }
             else { accent = "Orange"; }
 
-            ThemeManager.ChangeAppStyle(Application.Current,
-                                    ThemeManager.GetAccent(accent),
-                                    ThemeManager.GetAppTheme(theme));
+            ThemeManager.Current.ChangeTheme(Application.Current, $"{theme}.{accent}");
         }
 
         private void chkLogin_Click(object sender, RoutedEventArgs e)

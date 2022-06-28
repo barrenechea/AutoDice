@@ -9,7 +9,7 @@ using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
 using AutoDice.Sites;
-using MahApps.Metro;
+using ControlzEx.Theming;
 using MahApps.Metro.Controls.Dialogs;
 
 namespace AutoDice
@@ -170,7 +170,7 @@ namespace AutoDice
         private static void ChangeAppStyle(int a, int b)
         {
             string accent;
-            var theme = a == 0 ? "BaseLight" : "BaseDark";
+            var theme = a == 0 ? "Light" : "Dark";
             switch (b)
             {
                 case 0:
@@ -247,9 +247,7 @@ namespace AutoDice
                     break;
             }
 
-            ThemeManager.ChangeAppStyle(Application.Current,
-                                        ThemeManager.GetAccent(accent),
-                                        ThemeManager.GetAppTheme(theme));
+            ThemeManager.Current.ChangeTheme(Application.Current, $"{theme}.{accent}");
         }
         #endregion
         #region Event if user click on Save Login Info

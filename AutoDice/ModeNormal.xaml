@@ -3,7 +3,7 @@
                       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                       xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
                       BorderBrush="{DynamicResource AccentColorBrush}" BorderThickness="1"
-                      Title="AutoDice" TitleCaps="False" Height="520" RightWindowCommandsOverlayBehavior="Never"
+                      Title="AutoDice" TitleCharacterCasing="Normal" Height="520" RightWindowCommandsOverlayBehavior="Never"
                       Width="384" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize"
                       Loaded="MetroWindow_Loaded">
     <Controls:MetroWindow.TaskbarItemInfo>
@@ -127,7 +127,7 @@
     <Grid>
         <Controls:MetroProgressBar Foreground="{DynamicResource AccentColorBrush}" x:Name="prgProgreso"
                                    IsIndeterminate="false" Margin="0,0,0,28" VerticalAlignment="Bottom" Height="13" />
-        <TabControl Height="406" VerticalAlignment="Top">
+        <TabControl Height="406" VerticalAlignment="Top" Style="{StaticResource MahApps.Styles.TabControl.AnimatedSingleRow}">
             <TabItem Header="Roll">
                 <Grid>
                     <Label Content="Mode:" HorizontalAlignment="Left" Margin="10,45,0,0" VerticalAlignment="Top" />

@@ -4,7 +4,7 @@
                        xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
                        xmlns:sparrowToolkit="http://sparrowtoolkit.codeplex.com/wpf"
                        BorderBrush="{DynamicResource AccentColorBrush}" BorderThickness="1"
-                       Title="AutoDice: [Username] [Advanced Mode]" TitleCaps="False"
+                       Title="AutoDice: [Username] [Advanced Mode]" TitleCharacterCasing="Normal"
                        Width="1200" MinWidth="960" Height="675" MinHeight="322"
                        ResizeMode="CanResizeWithGrip" WindowStartupLocation="CenterScreen"
                        Loaded="MetroWindow_Loaded">
@@ -211,10 +211,10 @@
         </Grid.ColumnDefinitions>
         <ScrollViewer HorizontalScrollBarVisibility="Visible" Margin="0,0,0,0" Grid.RowSpan="2">
             <Grid Margin="0">
-                <TabControl Margin="0">
+                <TabControl Margin="0" Style="{StaticResource MahApps.Styles.TabControl.AnimatedSingleRow}">
                     <TabItem Header="Strategies">
                         <Grid Width="428">
-                            <TabControl Margin="0" SelectionChanged="TabStrategies_SelectionChanged">
+                            <TabControl Margin="0" Style="{StaticResource MahApps.Styles.TabControl.AnimatedSingleRow}" SelectionChanged="TabStrategies_SelectionChanged">
                                 <TabItem x:Name="TabMartingale" Header="Martingale">
                                     <Grid>
                                         <GroupBox Header="Multiply on loss"  HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="250" Width="408" RenderTransformOrigin="0.5,0.5">
@@ -360,7 +360,7 @@
         <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="10" Grid.Row="0" Grid.RowSpan="2"/>
         <GridSplitter ResizeDirection="Rows" Grid.Column="1" HorizontalAlignment="Stretch" Height="10" Margin="10,0,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.ColumnSpan="2"/>
         <Grid Grid.Column="1" Margin="20,20,10,10" Grid.Row="1" Grid.ColumnSpan="2" >
-            <TabControl Margin="-10,-10,-10,-10">
+            <TabControl Style="{StaticResource MahApps.Styles.TabControl.AnimatedSingleRow}" Margin="-10,-10,-10,-10">
                 <TabItem Header="DataGrid">
                     <Grid>
                         <DataGrid x:Name="GridBets" Margin="0,25,0,0" VerticalAlignment="Top" IsReadOnly="True"/>

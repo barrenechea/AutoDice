@@ -12,7 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shell;
 using AutoDice.Sites;
-using MahApps.Metro;
+using ControlzEx.Theming;
 using MahApps.Metro.Controls.Dialogs;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -1591,13 +1591,13 @@ namespace AutoDice
             string theme, accent;
             if (a == 0)
             {
-                theme = "BaseLight";
+                theme = "Light";
                 logoBlack.Visibility = Visibility.Hidden;
                 logoWhite.Visibility = Visibility.Visible;
             }
             else
             {
-                theme = "BaseDark";
+                theme = "Dark";
                 logoWhite.Visibility = Visibility.Hidden;
                 logoBlack.Visibility = Visibility.Visible;
             }
@@ -1676,9 +1676,8 @@ namespace AutoDice
                     accent = "Blue";
                     break;
             }
-            ThemeManager.ChangeAppStyle(Application.Current,
-                                        ThemeManager.GetAccent(accent),
-                                        ThemeManager.GetAppTheme(theme));
+
+            ThemeManager.Current.ChangeTheme(Application.Current, $"{theme}.{accent}");
         }
 
         #endregion
